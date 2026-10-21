@@ -44,8 +44,9 @@ jobs:
           cp .firmware/test/configs/linuxprocess.config .firmware/.config
           make -C .firmware olddefconfig
           make -C .firmware -j4
-      - name: Install klippy requirements
+      - name: Install requirements
         run: |
+          pip install -r requirements-test.txt
           python -m venv .klippy-env
           .klippy-env/bin/pip install -r .firmware/scripts/klippy-requirements.txt
       - run: python -m unittest discover -s tests -p test_klippy.py -v
