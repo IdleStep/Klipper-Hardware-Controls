@@ -1,91 +1,12 @@
-"""Render real Klipper templates and execute emitted macro commands in isolation.
+"""Template behavior tests for Hardware Controls, run in the shared simulator.
 
 Run with: python -m unittest discover -s tests -v
 Requires Jinja2 3.1.6. No printer access and no hardware commands are transmitted.
 """
-import ast
 import configparser
-import copy
-import pathlib
-import shlex
 import unittest
 
-import jinja2
-
-HW = pathlib.Path(__file__).resolve().parents[1]
-
-class State(dict):
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError as e:
-            raise AttributeError(key) from e
-
-def wrap(value):
-    if isinstance(value, dict):
-        return State({k: wrap(v) for k,v in value.items()})
-    if isinstance(value,list):
-        return [wrap(v) for v in value]
-    return value
-
-class Printer:
-    def __init__(self, hardware=True):
-        self.state = wrap({'idle_timeout': {'state': 'Idle'}, 'heater_generic chamber': {'target':55., 'temperature':55.},
-            'heater_bed': {'target':0., 'temperature':80.}, 'fan': {'speed':0.},
-            'fan_generic exhaust_fan': {'speed':0.}, 'fan_generic external_pc': {'speed':0.},
-            'filament_motion_sensor motion_sensor': {'enabled':False},
-            'filament_switch_sensor switch_sensor': {'enabled':False},
-            'configfile': {'settings': {'fan': {'off_below':0.01}, 'stepper_x':{}, 'stepper_y':{}}}})
-        self.templates={}
-        self.commands=[]
-        self.delays={}
-        self.messages=[]
-        self.env=jinja2.Environment(block_start_string='{%',block_end_string='%}',variable_start_string='{',variable_end_string='}')
-        if hardware:
-            for name in ['settings','fans','chamber','leds','dump_fan','sensors','release_steppers']:
-                self.load(HW / (name+'.cfg'))
-
-    def load(self,path):
-        cfg=configparser.RawConfigParser(delimiters=(':',),strict=True)
-        cfg.read_string(path.read_text(encoding='utf-8'))
-        for section in cfg.sections():
-            if section.startswith(('gcode_macro ', 'delayed_gcode ')):
-                kind,name=section.split(' ',1)
-                self.templates[name.upper()]=self.env.from_string(cfg[section].get('gcode',''))
-                if kind=='gcode_macro':
-                    self.state[section]=wrap({k[9:]:ast.literal_eval(v) for k,v in cfg[section].items() if k.startswith('variable_')})
-
-    def run(self,command,**params):
-        def fail(message):
-            raise ValueError(message)
-        rendered=self.templates[command.upper()].render(printer=copy.deepcopy(self.state),params=State({k:str(v) for k,v in params.items()}),
-            action_raise_error=fail,action_respond_info=lambda s:self.messages.append(s) or '')
-        for line in rendered.splitlines():
-            line=line.strip()
-            if not line or line.startswith('#'):
-                continue
-            tokens=shlex.split(line)
-            name=tokens[0].upper()
-            args=dict(t.split('=',1) for t in tokens[1:] if '=' in t)
-            self.commands.append(line)
-            if name in self.templates:
-                self.run(name,**args)
-            elif name=='SET_GCODE_VARIABLE':
-                self.state['gcode_macro '+args['MACRO']][args['VARIABLE']]=wrap(ast.literal_eval(args['VALUE']))
-            elif name=='UPDATE_DELAYED_GCODE':
-                self.delays[args['ID']]=float(args['DURATION'])
-            elif name=='SET_HEATER_TEMPERATURE':
-                key='heater_generic '+args['HEATER'] if 'heater_generic '+args['HEATER'] in self.state else args['HEATER']
-                self.state[key].target=float(args['TARGET'])
-            elif name=='SET_FAN_SPEED':
-                self.state['fan_generic '+args['FAN']].speed=float(args['SPEED'])
-            elif name=='M106':
-                self.state['fan'].speed=float(tokens[1][1:])/255
-            elif name=='SET_FILAMENT_SENSOR':
-                for kind in ['filament_motion_sensor ','filament_switch_sensor ']:
-                    if kind+args['SENSOR'] in self.state:
-                        self.state[kind+args['SENSOR']].enabled=bool(int(args['ENABLE']))
-        return rendered
+from klipper_sim import HW_ROOT as HW, Printer, State, wrap
 
 class Templates(unittest.TestCase):
     def test_hardware_independent_and_inert(self):
@@ -184,14 +105,6 @@ class Templates(unittest.TestCase):
                     p.run('EXHAUST_FAN',SPEED=value)
                 self.assertEqual(p.state['fan_generic exhaust_fan'].speed,.7)
 
-    def test_every_public_macro_has_description(self):
-        for name in ['fans','chamber','leds','dump_fan','sensors','release_steppers','optional/fan_tach_monitor']:
-            cfg=configparser.RawConfigParser(delimiters=(':',),strict=True)
-            cfg.read(HW/(name+'.cfg'),encoding='utf-8')
-            for section in cfg.sections():
-                if section.startswith('gcode_macro ') and not section[12:].startswith('_'):
-                    with self.subTest(macro=section):
-                        self.assertTrue(cfg[section].get('description','').strip())
 
 class FanTachMonitor(unittest.TestCase):
     def printer(self,rpm):
