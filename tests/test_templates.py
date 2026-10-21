@@ -116,6 +116,22 @@ class Templates(unittest.TestCase):
         p.run('CALLER')
         self.assertEqual(p.state['fan_generic external_pc'].speed, .4)
 
+    def test_chamber_sets_target(self):
+        p = Printer()
+        p.run('CHAMBER', TEMP=40)
+        self.assertEqual(p.state['heater_generic chamber'].target, 40)
+        p.run('CHAMBER')
+        self.assertEqual(p.state['heater_generic chamber'].target, 0)
+        self.assertEqual(p.messages, [])
+
+    def test_chamber_invalid_warns_and_turns_off(self):
+        for value in ['abc', -5]:
+            with self.subTest(value=value):
+                p = Printer()
+                p.run('CHAMBER', TEMP=value)
+                self.assertEqual(p.state['heater_generic chamber'].target, 0)
+                self.assertEqual(p.messages, ['invalid CHAMBER value %s, set to 0' % value])
+
 
 class FanTachMonitor(unittest.TestCase):
     def printer(self, rpm):
