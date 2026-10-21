@@ -10,6 +10,10 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
   extraction) when it turns the fan off for an out-of-range or non-numeric value.
 - EXHAUST_FAN, BED_FANS and EXTERNAL_PC reject non-numeric speeds instead of
   silently stopping the fan.
+- An invalid EXHAUST_FAN, BED_FANS or EXTERNAL_PC speed is reported once as
+  `Fan speed must be between 0.0 and 1.0` and leaves the fan unchanged. It used
+  to raise, which Klipper and Kalico print as `Error evaluating ...` once per
+  macro level and which aborted the calling macro or print.
 - The optional fan tachometer monitor no longer errors every 3 s without
   `hotend_fan`, or pauses prints when the fan has no tachometer.
 

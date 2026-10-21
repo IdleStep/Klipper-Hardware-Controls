@@ -96,14 +96,21 @@ class Templates(unittest.TestCase):
                 self.assertEqual(p.commands[-1],'M106 S0')
                 self.assertEqual(p.messages,['invalid PART_COOLING value %s, set to 0'%value])
 
-    def test_generic_fan_rejects_invalid_speed(self):
+    def test_generic_fan_reports_invalid_speed(self):
         for value in [1.5,-.1,'abc']:
             with self.subTest(value=value):
                 p=Printer()
                 p.state['fan_generic exhaust_fan'].speed=.7
-                with self.assertRaisesRegex(ValueError,'between 0.0 and 1.0'):
-                    p.run('EXHAUST_FAN',SPEED=value)
+                p.run('EXHAUST_FAN',SPEED=value)
+                self.assertEqual(p.commands[-1],'RESPOND TYPE=error MSG="Fan speed must be between 0.0 and 1.0 (got %s)"'%value)
+                self.assertFalse(any(c.startswith('SET_FAN_SPEED') for c in p.commands))
                 self.assertEqual(p.state['fan_generic exhaust_fan'].speed,.7)
+
+    def test_invalid_speed_does_not_stop_the_caller(self):
+        p=Printer()
+        p.templates['CALLER']=p.env.from_string('EXHAUST_FAN SPEED=2\nEXTERNAL_PC SPEED=0.4')
+        p.run('CALLER')
+        self.assertEqual(p.state['fan_generic external_pc'].speed,.4)
 
 
 class FanTachMonitor(unittest.TestCase):
