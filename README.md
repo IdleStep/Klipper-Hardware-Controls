@@ -38,8 +38,12 @@ bed_heater and part_fan take full object names. Empty names disable optional rol
 | RELEASE_Z | Preserves legacy M84 Z; stock Klipper disables ALL motors |
 | RELEASE_XY | Disables configured XY steppers individually |
 
-Missing optional devices are skipped. Generic fan speeds outside 0..1 error before
-issuing a device command. PART_COOLING preserves legacy percent/fraction handling.
+Missing optional devices are skipped. Generic fan speeds outside 0..1, or not a
+number, error before issuing a device command. PART_COOLING preserves legacy
+percent/fraction handling: any other value (for example 255, 1.05 or text) turns
+the fan off and reports "invalid PART_COOLING value" instead of aborting a print.
+Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn
+it off, as before.
 LED dim defaults preserve 0.3098 for neopixels and 0.33 for output pins.
 Stepper release never runs automatically. Individual-stepper disable does not
 invalidate homing information; rehome after manually moving disabled axes.
@@ -69,7 +73,9 @@ macro file (initial_duration 0.1; MOTION_SENSOR ENABLE=0).
 `optional/fan_tach_monitor.cfg` preserves the existing Andrew Ellis/alch3my monitor.
 Include it explicitly only on printers with `heater_fan hotend_fan` and a tachometer.
 It starts after one second, checks every three seconds, and can PAUSE and turn
-off the hotend using existing policy. Default minimum is 8000 RPM. It is excluded
+off the hotend using existing policy. Default minimum is 8000 RPM. The check is
+skipped when `hotend_fan` is missing or reports no RPM (no `tachometer_pin`), so a
+misconfigured fan cannot trigger false pauses. It is excluded
 from hardware.cfg, and retains its original device names and policy for this
 migration. Turbo's existing activation must be replaced with this optional include.
 
