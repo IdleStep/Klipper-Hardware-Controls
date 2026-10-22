@@ -2,6 +2,10 @@ CHAMBER TEMP=40
 ASSERT_HEATER HEATER=heater_generic:chamber TARGET=40
 CHAMBER TEMP=0
 ASSERT_HEATER HEATER=heater_generic:chamber TARGET=0
+CHAMBER TEMP=40
+; An invalid temperature is reported and turns the heater off without an error.
+CHAMBER TEMP=abc
+ASSERT_HEATER HEATER=heater_generic:chamber TARGET=0
 LED_ON
 LED_DIM
 LED_OFF

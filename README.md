@@ -44,10 +44,10 @@ keep only the values that differ and include it after the package.
 | `chamber_heater` | `"chamber"` | `[heater_generic NAME]` |
 | `chamber_sensor` | `"heater_generic chamber"` | full object name, read when there is no chamber heater |
 | `bed_heater` | `"heater_bed"` | full object name |
-| `exhaust_fan`, `bed_fans`, `external_pc` | role names | `[fan_generic NAME]` |
+| `exhaust_fan`, `bed_fans`, `external_pc` | `"exhaust_fan"`, `"bed_fans"`, `"external_pc"` | `[fan_generic NAME]` |
 | `part_fan` | `"fan"` | `fan` (M106) or `fan_generic NAME` |
-| `motion_sensor`, `switch_sensor` | role names | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
-| `led_neopixels`, `led_pins` | lists | `[neopixel NAME]`, `[output_pin NAME]` |
+| `motion_sensor`, `switch_sensor` | `"motion_sensor"`, `"switch_sensor"` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
+| `led_neopixels`, `led_pins` | `["discostick", "th_leds"]`, `["daystick"]` | `[neopixel NAME]`, `[output_pin NAME]` |
 | `led_dim`, `led_pin_dim` | `0.3098`, `0.33` | LED_DIM levels |
 | `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections |
 
@@ -58,10 +58,10 @@ without an error.
 
 | Command | Parameters and behavior |
 |---|---|
-| EXHAUST_FAN, BED_FANS, EXTERNAL_PC | `SPEED=0.0` to `1.0`. Anything else, including text, leaves the fan as it is and reports `Fan speed must be between 0.0 and 1.0`; like PART_COOLING, it does not abort the macro or print that sent it. |
-| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent. Any other value turns the fan off and reports `invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
+| EXHAUST_FAN, BED_FANS, EXTERNAL_PC | `SPEED=0.0` to `1.0` (default 0, which stops the fan). Anything else, including text, leaves the fan as it is and reports `Fan speed must be between 0.0 and 1.0`. The error is reported, not raised, so it does not abort the macro or print that sent it. |
+| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
 | RESET_FANS | Stops every configured controlled fan role. |
-| CHAMBER | `TEMP=` chamber heater target in °C. |
+| CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
 | LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. |
 | DUMP_FAN | Prints the configured part fan's status. |
 | MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). |
@@ -84,6 +84,10 @@ gcode:
 The printer workflow decides when to schedule it, for example
 `UPDATE_DELAYED_GCODE ID=ENABLE_MOTION_SENSOR DURATION=60`. Including the module
 does not change sensor state.
+
+MOTION_SENSOR and SWITCH_SENSOR also carry `fmotion_enabled` and
+`fswitch_enabled`. This package does not read them: they are there for PAUSE
+macros to save each sensor's state and for RESUME macros to restore it.
 
 ## Optional fan tachometer monitor
 
