@@ -147,7 +147,7 @@ class FanTachMonitor(unittest.TestCase):
 
     def test_stopped_fan_pauses_after_three_checks(self):
         p = self.printer(0.)
-        for i in range(2):
+        for _ in range(2):
             p.run('HOTEND_FAN_CHECK')
             self.assertNotIn('PAUSE', p.commands)
         p.run('HOTEND_FAN_CHECK')
@@ -165,7 +165,7 @@ class FanTachMonitor(unittest.TestCase):
         for rpm in ['missing', None]:
             with self.subTest(rpm=rpm):
                 p = self.printer(rpm)
-                for i in range(5):
+                for _ in range(5):
                     p.run('CHECK_ALL_FANS')
                 self.assertNotIn('PAUSE', p.commands)
                 self.assertFalse(any(c.startswith('SET_GCODE_VARIABLE') for c in p.commands))
