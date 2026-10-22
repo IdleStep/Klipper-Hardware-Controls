@@ -22,7 +22,8 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 ### Changed
 - Public macros have descriptions in Mainsail and Fluidd.
 - `settings.cfg` and `examples/hardware-local.cfg` document every role.
-- Moonraker example follows tagged releases.
+- Moonraker example follows tagged releases, and its section is named after the
+  repository: `[update_manager Klipper-Hardware-Controls]`.
 - Code, comments, tests and README tidied, with no behavior change.
 - Tests: shared simulator (`tests/klipper_sim.py`), config lint, and real Klipper
   and Kalico batch runs in CI.
