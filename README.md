@@ -1,8 +1,12 @@
 # Klipper Hardware Controls
 
-Reusable hardware commands for Klipper configurations and chamber cooldown.
-This package depends on standard Klipper macros and `[respond]`, not on
-Klipper-Configs or the cooldown repository. Public command API: version 1.
+Reusable hardware commands (fans, chamber heater, LEDs, filament sensors,
+stepper release) for Klipper and Kalico configurations. Klipper-Configs and
+[Klipper-CHAMBER_COOLDOWN](https://github.com/IdleStep/Klipper-CHAMBER_COOLDOWN)
+build on it; it depends only on standard Klipper macros and `[respond]`.
+
+Public command API: **version 1**. Commands, parameters and `_HARDWARE_VARS`
+names stay compatible within version 1. See the [changelog](CHANGELOG.md).
 
 ## Install
 
@@ -13,44 +17,63 @@ Clone into `~/printer_data/config/Klipper-Hardware-Controls`, then include once:
 [include hardware-local.cfg]
 ```
 
-Alternatively include `settings.cfg` and only needed modules: `fans.cfg`,
-`chamber.cfg`, `leds.cfg`, `sensors.cfg`, `dump_fan.cfg`, `release_steppers.cfg`.
-Cooldown requires settings, fans and chamber. Never load both bundle and individual
-copies. Replace old helper includes before loading this package.
+Or include `settings.cfg` followed by only the modules you need:
 
-Define physical devices, pins, sensor types, heater verification and power limits
-in printer configuration. Copy the local settings example outside this checkout
-and load it after defaults. Object names must be valid Klipper configuration names.
-Generic fan settings take names without the `fan_generic ` prefix; chamber_sensor,
-bed_heater and part_fan take full object names. Empty names disable optional roles.
+| Module | Commands |
+|---|---|
+| `fans.cfg` | EXHAUST_FAN, BED_FANS, EXTERNAL_PC, PART_COOLING, RESET_FANS |
+| `chamber.cfg` | CHAMBER |
+| `leds.cfg` | LED_ON, LED_DIM, LED_OFF |
+| `dump_fan.cfg` | DUMP_FAN |
+| `sensors.cfg` | MOTION_SENSOR, SWITCH_SENSOR, delayed ENABLE_MOTION_SENSOR |
+| `release_steppers.cfg` | RELEASE_Z, RELEASE_XY |
+
+Chamber cooldown needs `settings.cfg`, `fans.cfg` and `chamber.cfg`. Never load
+the bundle and individual modules together.
+
+## Configuration
+
+Physical devices (pins, sensor types, heater verification, power limits) stay in
+your printer configuration. This package only needs to know their names, set in
+`_HARDWARE_VARS` (`settings.cfg`). Copy
+[`examples/hardware-local.cfg`](examples/hardware-local.cfg) outside this checkout,
+keep only the values that differ and include it after the package.
+
+| Variable | Default | Refers to |
+|---|---|---|
+| `chamber_heater` | `"chamber"` | `[heater_generic NAME]` |
+| `chamber_sensor` | `"heater_generic chamber"` | full object name, read when there is no chamber heater |
+| `bed_heater` | `"heater_bed"` | full object name |
+| `exhaust_fan`, `bed_fans`, `external_pc` | `"exhaust_fan"`, `"bed_fans"`, `"external_pc"` | `[fan_generic NAME]` |
+| `part_fan` | `"fan"` | `fan` (M106) or `fan_generic NAME` |
+| `motion_sensor`, `switch_sensor` | `"motion_sensor"`, `"switch_sensor"` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
+| `led_neopixels`, `led_pins` | `["discostick", "th_leds"]`, `["daystick"]` | `[neopixel NAME]`, `[output_pin NAME]` |
+| `led_dim`, `led_pin_dim` | `0.3098`, `0.33` | LED_DIM levels |
+| `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections |
+
+An empty string disables a role. Devices that are not configured are skipped
+without an error.
 
 ## Commands
 
-| Command | Parameters / behavior |
+| Command | Parameters and behavior |
 |---|---|
-| EXHAUST_FAN, BED_FANS, EXTERNAL_PC | SPEED=0.0 through 1.0 |
-| PART_COOLING | SPEED=0.0 through 1.0, or 1.1 through 100 percent |
-| RESET_FANS | Stops all configured controlled fan roles |
-| CHAMBER | TEMP=target in °C |
-| LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups |
-| DUMP_FAN | Configured part fan status |
-| MOTION_SENSOR, SWITCH_SENSOR | ENABLE=0 or 1 (default 1) |
-| RELEASE_Z | Preserves legacy M84 Z; stock Klipper disables ALL motors |
-| RELEASE_XY | Disables configured XY steppers individually |
+| EXHAUST_FAN, BED_FANS, EXTERNAL_PC | `SPEED=0.0` to `1.0` (default 0, which stops the fan). Anything else, including text, leaves the fan as it is and reports `Fan speed must be between 0.0 and 1.0`. The error is reported, not raised, so it does not abort the macro or print that sent it. |
+| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
+| RESET_FANS | Stops every configured controlled fan role. |
+| CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
+| LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. |
+| DUMP_FAN | Prints the configured part fan's status. |
+| MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). |
+| RELEASE_Z | Runs `M84 Z`. Stock Klipper disables **all** motors for this. |
+| RELEASE_XY | Disables the configured XY steppers individually. |
 
-Missing optional devices are skipped. Generic fan speeds outside 0..1, or not a
-number, error before issuing a device command. PART_COOLING preserves legacy
-percent/fraction handling: any other value (for example 255, 1.05 or text) turns
-the fan off and reports "invalid PART_COOLING value" instead of aborting a print.
-Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn
-it off, as before.
-LED dim defaults preserve 0.3098 for neopixels and 0.33 for output pins.
-Stepper release never runs automatically. Individual-stepper disable does not
-invalidate homing information; rehome after manually moving disabled axes.
+Stepper release never runs automatically. Disabling individual steppers does not
+clear homing; rehome after moving a disabled axis by hand.
 
 ## Sensor scheduling
 
-`sensors.cfg` includes an inert callback, with no initial_duration:
+`sensors.cfg` defines an inert callback with no `initial_duration`:
 
 ```ini
 [delayed_gcode ENABLE_MOTION_SENSOR]
@@ -58,35 +81,55 @@ gcode:
   MOTION_SENSOR ENABLE=1
 ```
 
-Existing callers continue scheduling it with:
+The printer workflow decides when to schedule it, for example
+`UPDATE_DELAYED_GCODE ID=ENABLE_MOTION_SENSOR DURATION=60`. Including the module
+does not change sensor state.
 
-```gcode
-UPDATE_DELAYED_GCODE ID=ENABLE_MOTION_SENSOR DURATION=60
+MOTION_SENSOR and SWITCH_SENSOR also carry `fmotion_enabled` and
+`fswitch_enabled`. This package does not read them: they are there for PAUSE
+macros to save each sensor's state and for RESUME macros to restore it.
+
+## Optional fan tachometer monitor
+
+`optional/fan_tach_monitor.cfg` is the Andrew Ellis / alch3my monitor, excluded
+from `hardware.cfg`. Include it only on printers with `[heater_fan hotend_fan]`
+and a `tachometer_pin`:
+
+```ini
+[include Klipper-Hardware-Controls/optional/fan_tach_monitor.cfg]
 ```
 
-The printer workflow owns when to schedule it. Including the module does not
-change sensor state. Klipper-Configs owns startup disable_sensors in its common
-macro file (initial_duration 0.1; MOTION_SENSOR ENABLE=0).
-
-## Optional monitoring
-
-`optional/fan_tach_monitor.cfg` preserves the existing Andrew Ellis/alch3my monitor.
-Include it explicitly only on printers with `heater_fan hotend_fan` and a tachometer.
-It starts after one second, checks every three seconds, and can PAUSE and turn
-off the hotend using existing policy. Default minimum is 8000 RPM. The check is
-skipped when `hotend_fan` is missing or reports no RPM (no `tachometer_pin`), so a
-misconfigured fan cannot trigger false pauses. It is excluded
-from hardware.cfg, and retains its original device names and policy for this
-migration. Turbo's existing activation must be replaced with this optional include.
+It starts one second after Klipper starts and checks every three seconds. After
+three consecutive readings below 8000 RPM while the hotend is hot, it pauses the
+print and turns the hotend off. The check is skipped when `hotend_fan` is missing
+or reports no RPM, so a misconfigured fan cannot cause false pauses.
 
 ## Updates and rollback
 
-Use examples/moonraker.conf. Keep overrides outside the checkout. Preserve public
-API compatibility within version 1; record exact tested hardware and consumer
-revisions for each printer. Restart/update only while inactive. Restore old
-includes and affected integrations together if validation fails. Other printers
-must install this dependency before updating to the cleaned Klipper-Configs.
+Add [`examples/moonraker.conf`](examples/moonraker.conf) to `moonraker.conf`. It
+follows tagged releases (`channel: stable`); use `channel: dev` to follow `main`.
+Update and restart only while the printer is idle, keep overrides outside the
+checkout, and record the tested revision for each printer. To roll back, check
+out the previous tag and restart. Moving from the old Klipper-Configs helpers is
+covered in [docs/MIGRATION.md](docs/MIGRATION.md).
 
-Run tests with `pip install -r requirements-test.txt` followed by
-`python -m unittest discover -s tests -v`. Tests simulate commands without hardware.
-GPL-3.0 applies; optional monitoring retains upstream attribution.
+## Tests
+
+```sh
+pip install -r requirements-test.txt
+python -m unittest discover -s tests -v
+```
+
+- `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
+  Klipper-CHAMBER_COOLDOWN and Klipper-Configs reuse it.
+- `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
+  tabs, trailing whitespace, malformed `RESPOND` messages and missing macro
+  descriptions.
+- `tests/test_klippy.py` loads the package in real Klipper and Kalico without
+  hardware and runs `tests/klippy/*.gcode`. It is skipped unless `KLIPPER_DIR`,
+  `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows how to build
+  them.
+
+## License
+
+GPL-3.0. The optional monitor keeps its upstream attribution.
