@@ -2,7 +2,7 @@
 
 Reusable hardware commands (fans, chamber heater, LEDs, filament sensors,
 stepper release) for Klipper and Kalico configurations. Klipper-Configs and
-[Klipper-CHAMBER_COOLDOWN](https://github.com/IdleStep/Klipper-CHAMBER_COOLDOWN)
+[Klipper-Chamber-Cooldown](https://github.com/IdleStep/Klipper-Chamber-Cooldown)
 build on it; it depends only on standard Klipper macros and `[respond]`.
 
 Public command API: **version 1**. Commands, parameters and `_HARDWARE_VARS`
@@ -121,7 +121,7 @@ python -m unittest discover -s tests -v
 ```
 
 - `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
-  Klipper-CHAMBER_COOLDOWN and Klipper-Configs reuse it.
+  Klipper-Chamber-Cooldown and Klipper-Configs reuse it.
 - `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
   tabs, trailing whitespace, malformed `RESPOND` messages and missing macro
   descriptions.

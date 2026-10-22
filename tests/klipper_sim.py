@@ -2,7 +2,7 @@
 
 It renders real gcode_macro / delayed_gcode templates with Klipper's Jinja
 delimiters and executes the commands they emit against an in-memory printer
-state. No printer is contacted. Klipper-CHAMBER_COOLDOWN and Klipper-Configs
+state. No printer is contacted. Klipper-Chamber-Cooldown and Klipper-Configs
 import this module from their Hardware-Controls checkout, so keep the public
 names (State, wrap, Printer, HW_ROOT, HARDWARE_MODULES) stable.
 
