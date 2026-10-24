@@ -130,6 +130,11 @@ python -m unittest discover -s tests -v
   `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows how to build
   them.
 
+## Style
+
+Conventions for the config files, messages and tests, shared with
+Klipper-Chamber-Cooldown and Klipper-Configs, are in [docs/STYLE.md](docs/STYLE.md).
+
 ## License
 
 GPL-3.0. The optional monitor keeps its upstream attribution.
