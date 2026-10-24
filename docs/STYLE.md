@@ -46,7 +46,8 @@ Klipper-Configs. A change that follows them must not change what the printer doe
 ## Comments
 
 Comments say why, never what. They sit on the line above the code, as sentences. Do not
-leave comments about things that were removed, and do not keep commented-out code.
+leave comments about things that were removed, and do not keep commented-out code. A data
+table may carry its notes in a trailing column.
 
 ## Console messages
 

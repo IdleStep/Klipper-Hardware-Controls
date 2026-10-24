@@ -19,7 +19,7 @@ class Loading(unittest.TestCase):
         cfg = configparser.RawConfigParser(delimiters=(':',))
         cfg.read(HW / 'sensors.cfg')
         self.assertNotIn('initial_duration', cfg['delayed_gcode ENABLE_MOTION_SENSOR'])
-        self.assertNotIn('delayed_gcode disable_sensors', cfg)
+        self.assertNotIn('delayed_gcode DISABLE_SENSORS', cfg)
 
 
 class Fans(unittest.TestCase):

@@ -9,7 +9,7 @@ and `fan_tach_monitor.cfg`). Command names and behavior were kept.
    you need) once, followed by your `hardware-local.cfg`.
 3. Printers that used the old fan tachometer monitor include
    `optional/fan_tach_monitor.cfg` instead; it is no longer part of the bundle.
-4. Klipper-Configs keeps the startup `disable_sensors` delayed gcode
+4. Klipper-Configs keeps the startup `DISABLE_SENSORS` delayed gcode
    (`initial_duration: 0.1`, `MOTION_SENSOR ENABLE=0`); this package only provides
    the `ENABLE_MOTION_SENSOR` callback its print-start macros schedule.
 5. Restart while idle and check that every command still exists.
