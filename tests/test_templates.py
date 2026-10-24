@@ -61,7 +61,7 @@ class Fans(unittest.TestCase):
                 printer.run('PART_COOLING', SPEED=value)
                 self.assertEqual(printer.commands[-1], 'M106 S0')
                 self.assertEqual(printer.messages,
-                                 ['invalid PART_COOLING value %s, set to 0' % value])
+                                 ['Invalid PART_COOLING value %s, set to 0' % value])
 
     def test_a_generic_fan_reports_an_invalid_speed_and_stays_unchanged(self):
         for value in [1.5, -.1, 'abc']:
@@ -101,7 +101,7 @@ class Chamber(unittest.TestCase):
                 printer.run('CHAMBER', TEMP=value)
                 self.assertEqual(printer.state['heater_generic chamber'].target, 0)
                 self.assertEqual(printer.messages,
-                                 ['invalid CHAMBER value %s, set to 0' % value])
+                                 ['Invalid CHAMBER value %s, set to 0' % value])
 
 
 class Leds(unittest.TestCase):
