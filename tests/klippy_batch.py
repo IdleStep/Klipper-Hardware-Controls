@@ -3,9 +3,9 @@
 Batch mode loads the full configuration with Klipper's own parser and Jinja
 version, then executes a gcode file. Any config or command error makes klippy
 exit non-zero; an unknown command only logs a warning, so the runner treats
-'Unknown command' in the log as a failure too. Two limits: delayed_gcode timers never fire, and fan speeds are
-not reported back, so scripts check macro variables and heater targets instead
-(see klippy/assert.cfg).
+'Unknown command' in the log as a failure too. Two limits: delayed_gcode timers
+never fire, and fan speeds are not reported back, so scripts check macro
+variables and heater targets instead (see klippy/assert.cfg).
 
 Environment (all three required, else the tests are skipped; set
 KLIPPY_REQUIRED=1 to make skipping an error):

@@ -21,8 +21,10 @@ import shlex
 
 import jinja2
 
-HW_ROOT = pathlib.Path(os.environ.get('HARDWARE_CONTROLS_ROOT') or pathlib.Path(__file__).parents[1]).resolve()
-HARDWARE_MODULES = ['settings', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
+HW_ROOT = pathlib.Path(
+    os.environ.get('HARDWARE_CONTROLS_ROOT') or pathlib.Path(__file__).parents[1]).resolve()
+HARDWARE_MODULES = [
+    'settings', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
 DEFAULT_IDLE_TIMEOUT = 4800.
 
 
@@ -132,14 +134,16 @@ class Printer:
         if name in self.templates:
             self.run(name, **args)
         elif name == 'SET_GCODE_VARIABLE':
-            self.state['gcode_macro ' + args['MACRO']][args['VARIABLE']] = wrap(ast.literal_eval(args['VALUE']))
+            macro = self.state['gcode_macro ' + args['MACRO']]
+            macro[args['VARIABLE']] = wrap(ast.literal_eval(args['VALUE']))
         elif name == 'UPDATE_DELAYED_GCODE':
             self.delays[args['ID']] = float(args['DURATION'])
         elif name == 'SET_IDLE_TIMEOUT':
             self.idle_timeout = float(args['TIMEOUT'])
         elif name == 'SET_HEATER_TEMPERATURE':
             generic = 'heater_generic ' + args['HEATER']
-            self.state[generic if generic in self.state else args['HEATER']].target = float(args['TARGET'])
+            heater = self.state[generic if generic in self.state else args['HEATER']]
+            heater.target = float(args['TARGET'])
         elif name == 'SET_FAN_SPEED':
             self.state['fan_generic ' + args['FAN']].speed = float(args['SPEED'])
         elif name == 'M106':
