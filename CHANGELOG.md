@@ -14,9 +14,21 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
   the print is already paused. It used to leave the hotend hot.
 
 ### Changed
-- The monitor's RPM limit and number of stops are the `min_rpm` and
-  `max_consecutive_stops` variables of `HOTEND_FAN_CHECK`. The defaults are
-  unchanged (8000 RPM, 3 stops).
+- The optional fan tachometer monitor is rewritten for this package. It no longer
+  contains code from the Print-Tuning-Guide, which declares no licence, so the
+  GPL-3.0 notice now covers the whole repository. Commands, variable names and
+  defaults are unchanged (8000 RPM, 3 stops, a check every 3 s); the console lines
+  are new (`Hotend fan stopped (1/3)`), and the limits and the check interval are
+  variables of `HOTEND_FAN_CHECK`: `min_rpm`, `max_consecutive_stops`,
+  `check_seconds`.
+- Messages for invalid input start with a prefix like the others: `❌` for a
+  refusal (an invalid fan speed or sensor value), `⚠️` when the command still acts
+  (`Invalid PART_COOLING value`, `Invalid CHAMBER value`). They are sent with
+  `RESPOND`; the text is unchanged.
+- Pull requests are checked with read-only token permissions, a firmware canary
+  runs weekly against the newest Klipper and Kalico, and Dependabot proposes
+  GitHub Action updates.
+- CONTRIBUTING, SECURITY, issue and pull request templates and CODEOWNERS added.
 - Tests: the config lint rejects `delayed_gcode` options that stock Klipper does not
   read (`description`); Kalico reads it, stock Klipper refuses to load the config.
 
