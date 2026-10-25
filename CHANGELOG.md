@@ -3,6 +3,11 @@
 Versions follow the public command API: the major version changes only when a
 command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
+## Unreleased
+
+### Changed
+- SECURITY.md asks for a public issue instead of a private report.
+
 ## 1.2.0
 
 ### Fixed
