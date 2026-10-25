@@ -6,9 +6,15 @@ CHAMBER TEMP=40
 ; An invalid temperature is reported and turns the heater off without an error.
 CHAMBER TEMP=abc
 ASSERT_HEATER HEATER=heater_generic:chamber TARGET=0
+CHAMBER TEMP=40
+CHAMBER TEMP=nan
+ASSERT_HEATER HEATER=heater_generic:chamber TARGET=0
 LED_ON
 LED_DIM
 LED_OFF
+; An invalid sensor value is reported and leaves the sensor alone.
+MOTION_SENSOR ENABLE=abc
+SWITCH_SENSOR ENABLE=nan
 MOTION_SENSOR ENABLE=0
 SWITCH_SENSOR ENABLE=1
 UPDATE_DELAYED_GCODE ID=ENABLE_MOTION_SENSOR DURATION=60

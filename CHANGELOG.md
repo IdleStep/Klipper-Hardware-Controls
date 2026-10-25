@@ -3,6 +3,23 @@
 Versions follow the public command API: the major version changes only when a
 command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
+## Unreleased
+
+### Fixed
+- MOTION_SENSOR and SWITCH_SENSOR report an `ENABLE` that is not 0 or 1 and leave
+  the sensor as it is. Text used to count as 0 and silently disabled the sensor.
+- EXHAUST_FAN, BED_FANS, EXTERNAL_PC and CHAMBER treat `nan` as invalid. It passed
+  the range checks and reached `SET_FAN_SPEED` and `SET_HEATER_TEMPERATURE`.
+- The optional fan tachometer monitor turns the hotend off when a fan stops while
+  the print is already paused. It used to leave the hotend hot.
+
+### Changed
+- The monitor's RPM limit and number of stops are the `min_rpm` and
+  `max_consecutive_stops` variables of `HOTEND_FAN_CHECK`. The defaults are
+  unchanged (8000 RPM, 3 stops).
+- Tests: the config lint rejects `delayed_gcode` options that stock Klipper does not
+  read (`description`); Kalico reads it, stock Klipper refuses to load the config.
+
 ## 1.1.0
 
 ### Fixed

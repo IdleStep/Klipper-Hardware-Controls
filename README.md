@@ -64,7 +64,7 @@ without an error.
 | CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `Invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
 | LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. |
 | DUMP_FAN | Prints the configured part fan's status. |
-| MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). |
+| MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). Anything else, including text, leaves the sensor as it is and reports `MOTION_SENSOR ENABLE must be 0 or 1`, so a typo cannot disable runout detection. |
 | RELEASE_Z | Runs `M84 Z`. Stock Klipper disables **all** motors for this. |
 | RELEASE_XY | Disables the configured XY steppers individually. |
 
@@ -101,8 +101,13 @@ and a `tachometer_pin`:
 
 It starts one second after Klipper starts and checks every three seconds. After
 three consecutive readings below 8000 RPM while the hotend is hot, it pauses the
-print and turns the hotend off. The check is skipped when `hotend_fan` is missing
-or reports no RPM, so a misconfigured fan cannot cause false pauses.
+print and turns the hotend off. If the print is already paused, the hotend is
+still turned off. The check is skipped when `hotend_fan` is missing or reports no
+RPM, so a misconfigured fan cannot cause false pauses.
+
+The limits are the `min_rpm` and `max_consecutive_stops` variables of
+`[gcode_macro HOTEND_FAN_CHECK]`; override them in a local file included after the
+monitor.
 
 ## Updates and rollback
 
