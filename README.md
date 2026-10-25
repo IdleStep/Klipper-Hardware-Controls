@@ -59,9 +59,9 @@ without an error.
 | Command | Parameters and behavior |
 |---|---|
 | EXHAUST_FAN, BED_FANS, EXTERNAL_PC | `SPEED=0.0` to `1.0` (default 0, which stops the fan). Anything else, including text, leaves the fan as it is and reports `Fan speed must be between 0.0 and 1.0`. The error is reported, not raised, so it does not abort the macro or print that sent it. |
-| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
+| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `Invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
 | RESET_FANS | Stops every configured controlled fan role. |
-| CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
+| CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `Invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
 | LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. |
 | DUMP_FAN | Prints the configured part fan's status. |
 | MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). |
@@ -129,6 +129,11 @@ python -m unittest discover -s tests -v
   hardware and runs `tests/klippy/*.gcode`. It is skipped unless `KLIPPER_DIR`,
   `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows how to build
   them.
+
+## Style
+
+Conventions for the config files, messages and tests, shared with
+Klipper-Chamber-Cooldown and Klipper-Configs, are in [docs/STYLE.md](docs/STYLE.md).
 
 ## License
 

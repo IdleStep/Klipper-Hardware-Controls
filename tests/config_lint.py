@@ -34,10 +34,12 @@ def lint_file(path, check_includes=True):
         if line != line.rstrip():
             problems.append('line %d: trailing whitespace' % number)
         stripped = line.strip()
-        if stripped.upper().startswith('RESPOND ') and 'MSG=' in stripped and not RESPOND_MSG.search(stripped):
-            problems.append('line %d: RESPOND MSG must be one double-quoted string ending the line' % number)
+        is_respond = stripped.upper().startswith('RESPOND ') and 'MSG=' in stripped
+        if is_respond and not RESPOND_MSG.search(stripped):
+            problems.append(
+                'line %d: RESPOND MSG must be one double-quoted string ending the line' % number)
         include = re.match(r'\[include (.+)\]\s*$', stripped)
-        if check_includes and include and not any(c in include.group(1) for c in '*?'):
+        if check_includes and include and not any(char in include.group(1) for char in '*?'):
             if not (path.parent / include.group(1)).exists():
                 problems.append('line %d: include target missing: %s' % (number, include.group(1)))
     cfg = configparser.RawConfigParser(delimiters=(':',), strict=True, interpolation=None)
