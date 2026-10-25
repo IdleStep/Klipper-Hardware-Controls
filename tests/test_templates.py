@@ -54,7 +54,7 @@ class Fans(unittest.TestCase):
         self.assertEqual(printer.messages, [])
 
     def test_part_cooling_reports_an_invalid_speed_and_stops_the_fan(self):
-        for value in [255, 1.05, -1, 'abc']:
+        for value in [255, 1.05, -1, 'abc', 'nan']:
             with self.subTest(value=value):
                 printer = Printer()
                 printer.state['fan'].speed = .5
@@ -64,7 +64,7 @@ class Fans(unittest.TestCase):
                                  ['Invalid PART_COOLING value %s, set to 0' % value])
 
     def test_a_generic_fan_reports_an_invalid_speed_and_stays_unchanged(self):
-        for value in [1.5, -.1, 'abc']:
+        for value in [1.5, -.1, 'abc', 'nan']:
             with self.subTest(value=value):
                 printer = Printer()
                 printer.state['fan_generic exhaust_fan'].speed = .7
@@ -95,7 +95,7 @@ class Chamber(unittest.TestCase):
         self.assertEqual(printer.messages, [])
 
     def test_chamber_reports_an_invalid_temperature_and_turns_the_heater_off(self):
-        for value in ['abc', -5]:
+        for value in ['abc', -5, 'nan']:
             with self.subTest(value=value):
                 printer = Printer()
                 printer.run('CHAMBER', TEMP=value)
@@ -131,6 +131,30 @@ class Sensors(unittest.TestCase):
         before = len(printer.commands)
         printer.run('MOTION_SENSOR', ENABLE=0)
         self.assertEqual(printer.commands[before:], [])
+
+    def test_a_sensor_value_that_is_not_0_or_1_is_reported_and_leaves_the_sensor_alone(self):
+        for macro, sensor in [('MOTION_SENSOR', 'filament_motion_sensor motion_sensor'),
+                              ('SWITCH_SENSOR', 'filament_switch_sensor switch_sensor')]:
+            for value in ['abc', 'nan', 2, -1, '']:
+                with self.subTest(macro=macro, value=value):
+                    printer = Printer()
+                    printer.state[sensor].enabled = True
+                    printer.run(macro, ENABLE=value)
+                    self.assertEqual(
+                        printer.commands[-1],
+                        'RESPOND TYPE=error MSG="%s ENABLE must be 0 or 1 (got %s)"'
+                        % (macro, value))
+                    self.assertFalse(any(command.startswith('SET_FILAMENT_SENSOR')
+                                         for command in printer.commands))
+                    self.assertTrue(printer.state[sensor].enabled)
+
+    def test_a_sensor_accepts_0_and_1_in_any_numeric_spelling(self):
+        printer = Printer()
+        for value, expected in [(0, False), (1, True), ('0.0', False), ('1.0', True)]:
+            with self.subTest(value=value):
+                printer.run('SWITCH_SENSOR', ENABLE=value)
+                self.assertEqual(printer.state['filament_switch_sensor switch_sensor'].enabled,
+                                 expected)
 
     def test_the_saved_sensor_variables_for_pause_and_resume_start_at_zero(self):
         printer = Printer()
@@ -172,6 +196,25 @@ class FanTachMonitor(unittest.TestCase):
         printer.run('HOTEND_FAN_CHECK')
         self.assertIn('PAUSE', printer.commands)
         self.assertIn('SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0', printer.commands)
+
+    def test_a_stopped_fan_turns_the_hotend_off_when_the_print_is_already_paused(self):
+        printer = self.printer_with_rpm(0.)
+        printer.state['pause_resume'].is_paused = True
+        printer.state['extruder'].target = 250.
+        for _ in range(3):
+            printer.run('HOTEND_FAN_CHECK')
+        self.assertNotIn('PAUSE', printer.commands)
+        self.assertIn('SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0', printer.commands)
+
+    def test_the_rpm_limit_and_the_number_of_stops_are_variables(self):
+        printer = self.printer_with_rpm(5000.)
+        printer.state['gcode_macro HOTEND_FAN_CHECK'].min_rpm = 4000
+        printer.state['gcode_macro HOTEND_FAN_CHECK'].max_consecutive_stops = 1
+        printer.run('HOTEND_FAN_CHECK')
+        self.assertNotIn('PAUSE', printer.commands)
+        printer.state['gcode_macro HOTEND_FAN_CHECK'].min_rpm = 6000
+        printer.run('HOTEND_FAN_CHECK')
+        self.assertIn('PAUSE', printer.commands)
 
     def test_a_running_fan_resets_the_count(self):
         printer = self.printer_with_rpm(0.)

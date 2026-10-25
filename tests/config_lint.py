@@ -2,14 +2,17 @@
 
 Catches what the template tests cannot: files Klipper would fail to parse,
 broken includes, tab or mixed indentation, trailing whitespace, CRLF endings,
-RESPOND messages with stray double quotes and public macros without a
-description (Mainsail and Fluidd show it in their macro lists).
+RESPOND messages with stray double quotes, public macros without a
+description (Mainsail and Fluidd show it in their macro lists) and
+delayed_gcode options that stock Klipper does not read, which it rejects at load.
 """
 import configparser
 import pathlib
 import re
 
 RESPOND_MSG = re.compile(r'\bMSG="[^"]*"\s*$')
+# Kalico also reads description here; stock Klipper fails to load a config that has one.
+DELAYED_GCODE_OPTIONS = {'gcode', 'initial_duration'}
 
 
 def config_files(root, skip=()):
@@ -52,6 +55,11 @@ def lint_file(path, check_includes=True):
         if section.startswith('gcode_macro ') and not section.split(' ', 1)[1].startswith('_'):
             if not cfg[section].get('description', '').strip():
                 problems.append('[%s] has no description' % section)
+        if section.startswith('delayed_gcode '):
+            unknown = sorted(set(cfg[section]) - DELAYED_GCODE_OPTIONS)
+            if unknown:
+                problems.append('[%s] has options stock Klipper rejects: %s'
+                                % (section, ', '.join(unknown)))
     return problems
 
 
