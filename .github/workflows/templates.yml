@@ -17,7 +17,7 @@ jobs:
   templates:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -40,8 +40,8 @@ jobs:
             ref: a6796621ef8abb905935a5b5c194a523a1d45a48
     name: klippy (${{ matrix.firmware }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: ${{ matrix.repository }}
           ref: ${{ matrix.ref }}

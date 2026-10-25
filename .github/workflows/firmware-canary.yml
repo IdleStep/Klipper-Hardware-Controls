@@ -27,8 +27,8 @@ jobs:
             ref: main
     name: klippy (${{ matrix.firmware }} ${{ matrix.ref }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: ${{ matrix.repository }}
           ref: ${{ matrix.ref }}
