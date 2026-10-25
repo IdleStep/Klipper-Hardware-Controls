@@ -1,0 +1,14 @@
+name: Feature request
+description: A command, option or device this package should support
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What you want to do
+    validations:
+      required: true
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Your hardware
+      description: The devices involved, as named in your printer configuration

@@ -91,7 +91,7 @@ macros to save each sensor's state and for RESUME macros to restore it.
 
 ## Optional fan tachometer monitor
 
-`optional/fan_tach_monitor.cfg` is the Andrew Ellis / alch3my monitor, excluded
+`optional/fan_tach_monitor.cfg` watches the hotend fan's tachometer. It is excluded
 from `hardware.cfg`. Include it only on printers with `[heater_fan hotend_fan]`
 and a `tachometer_pin`:
 
@@ -105,9 +105,11 @@ print and turns the hotend off. If the print is already paused, the hotend is
 still turned off. The check is skipped when `hotend_fan` is missing or reports no
 RPM, so a misconfigured fan cannot cause false pauses.
 
-The limits are the `min_rpm` and `max_consecutive_stops` variables of
-`[gcode_macro HOTEND_FAN_CHECK]`; override them in a local file included after the
-monitor.
+The limits are the `min_rpm`, `max_consecutive_stops` and `check_seconds` variables
+of `[gcode_macro HOTEND_FAN_CHECK]`; override them in a local file included after the
+monitor. To change what happens on a stoppage, override `FAN_STOPPAGE_ROUTINE`. The
+idea comes from the fan tach monitor in Andrew Ellis's Print-Tuning-Guide; this file
+is written for this package.
 
 ## Updates and rollback
 
@@ -135,6 +137,11 @@ python -m unittest discover -s tests -v
   `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows how to build
   them.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Report a safety problem as described in
+[SECURITY.md](SECURITY.md).
+
 ## Style
 
 Conventions for the config files, messages and tests, shared with
@@ -142,4 +149,4 @@ Klipper-Chamber-Cooldown and Klipper-Configs, are in [docs/STYLE.md](docs/STYLE.
 
 ## License
 
-GPL-3.0. The optional monitor keeps its upstream attribution.
+GPL-3.0.

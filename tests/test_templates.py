@@ -12,6 +12,13 @@ import unittest
 from klipper_sim import HW_ROOT as HW, Printer, State, wrap
 
 
+class Responds(unittest.TestCase):
+    """Base for test classes that look at the RESPOND commands a macro sent."""
+
+    def responses(self, printer):
+        return [command for command in printer.commands if command.startswith('RESPOND')]
+
+
 class Loading(unittest.TestCase):
     def test_loading_the_package_sends_no_commands(self):
         printer = Printer()
@@ -22,7 +29,7 @@ class Loading(unittest.TestCase):
         self.assertNotIn('delayed_gcode DISABLE_SENSORS', cfg)
 
 
-class Fans(unittest.TestCase):
+class Fans(Responds):
     def test_bed_fans_external_pc_and_part_cooling_work_without_an_exhaust_fan(self):
         printer = Printer()
         printer.state.pop('fan_generic exhaust_fan')
@@ -51,7 +58,7 @@ class Fans(unittest.TestCase):
             with self.subTest(value=value):
                 printer.run('PART_COOLING', SPEED=value)
                 self.assertEqual(printer.commands[-1], 'M106 S%d' % expected)
-        self.assertEqual(printer.messages, [])
+        self.assertEqual(self.responses(printer), [])
 
     def test_part_cooling_reports_an_invalid_speed_and_stops_the_fan(self):
         for value in [255, 1.05, -1, 'abc', 'nan']:
@@ -60,8 +67,9 @@ class Fans(unittest.TestCase):
                 printer.state['fan'].speed = .5
                 printer.run('PART_COOLING', SPEED=value)
                 self.assertEqual(printer.commands[-1], 'M106 S0')
-                self.assertEqual(printer.messages,
-                                 ['Invalid PART_COOLING value %s, set to 0' % value])
+                self.assertEqual(
+                    printer.commands[0],
+                    'RESPOND PREFIX="⚠️" MSG="Invalid PART_COOLING value %s, set to 0"' % value)
 
     def test_a_generic_fan_reports_an_invalid_speed_and_stays_unchanged(self):
         for value in [1.5, -.1, 'abc', 'nan']:
@@ -71,7 +79,7 @@ class Fans(unittest.TestCase):
                 printer.run('EXHAUST_FAN', SPEED=value)
                 self.assertEqual(
                     printer.commands[-1],
-                    'RESPOND TYPE=error MSG="Fan speed must be between 0.0 and 1.0 (got %s)"'
+                    'RESPOND PREFIX="❌" MSG="Fan speed must be between 0.0 and 1.0 (got %s)"'
                     % value)
                 self.assertFalse(any(command.startswith('SET_FAN_SPEED')
                                      for command in printer.commands))
@@ -85,14 +93,14 @@ class Fans(unittest.TestCase):
         self.assertEqual(printer.state['fan_generic external_pc'].speed, .4)
 
 
-class Chamber(unittest.TestCase):
+class Chamber(Responds):
     def test_chamber_sets_the_heater_target(self):
         printer = Printer()
         printer.run('CHAMBER', TEMP=40)
         self.assertEqual(printer.state['heater_generic chamber'].target, 40)
         printer.run('CHAMBER')
         self.assertEqual(printer.state['heater_generic chamber'].target, 0)
-        self.assertEqual(printer.messages, [])
+        self.assertEqual(self.responses(printer), [])
 
     def test_chamber_reports_an_invalid_temperature_and_turns_the_heater_off(self):
         for value in ['abc', -5, 'nan']:
@@ -100,8 +108,9 @@ class Chamber(unittest.TestCase):
                 printer = Printer()
                 printer.run('CHAMBER', TEMP=value)
                 self.assertEqual(printer.state['heater_generic chamber'].target, 0)
-                self.assertEqual(printer.messages,
-                                 ['Invalid CHAMBER value %s, set to 0' % value])
+                self.assertEqual(
+                    self.responses(printer),
+                    ['RESPOND PREFIX="⚠️" MSG="Invalid CHAMBER value %s, set to 0"' % value])
 
 
 class Leds(unittest.TestCase):
@@ -142,7 +151,7 @@ class Sensors(unittest.TestCase):
                     printer.run(macro, ENABLE=value)
                     self.assertEqual(
                         printer.commands[-1],
-                        'RESPOND TYPE=error MSG="%s ENABLE must be 0 or 1 (got %s)"'
+                        'RESPOND PREFIX="❌" MSG="%s ENABLE must be 0 or 1 (got %s)"'
                         % (macro, value))
                     self.assertFalse(any(command.startswith('SET_FILAMENT_SENSOR')
                                          for command in printer.commands))
@@ -215,6 +224,14 @@ class FanTachMonitor(unittest.TestCase):
         printer.state['gcode_macro HOTEND_FAN_CHECK'].min_rpm = 6000
         printer.run('HOTEND_FAN_CHECK')
         self.assertIn('PAUSE', printer.commands)
+
+    def test_each_stopped_check_says_how_many_stops_there_have_been(self):
+        printer = self.printer_with_rpm(0.)
+        for _ in range(3):
+            printer.run('HOTEND_FAN_CHECK')
+        stops = [command for command in printer.commands if 'Hotend fan stopped (' in command]
+        self.assertEqual(stops, ['RESPOND PREFIX="⚠️" MSG="Hotend fan stopped (%d/3)"' % number
+                                 for number in [1, 2, 3]])
 
     def test_a_running_fan_resets_the_count(self):
         printer = self.printer_with_rpm(0.)
