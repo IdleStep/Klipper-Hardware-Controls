@@ -3,7 +3,7 @@
 Versions follow the public command API: the major version changes only when a
 command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
-## Unreleased
+## 1.2.0
 
 ### Fixed
 - MOTION_SENSOR and SWITCH_SENSOR report an `ENABLE` that is not 0 or 1 and leave
