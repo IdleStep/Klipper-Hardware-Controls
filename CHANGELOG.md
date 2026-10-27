@@ -5,6 +5,13 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+### Changed
+- Breaking: `led_dim` and `led_pin_dim` are no longer roles of `_HARDWARE_VARS`, because
+  `hardware_names.cfg` names devices and these are brightness levels. `LED_DIM` has the
+  variables `neopixel_level` and `pin_level` instead (0.3 each), which a printer sets in its
+  own LED file included after the package. A printer that set `led_dim` or `led_pin_dim` moves
+  the value there.
+
 ## [2.0.0] - 2026-10-27
 
 This is a major release. Before a printer updates, copy the roles it uses from the old

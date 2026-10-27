@@ -65,7 +65,6 @@ the package. Klipper merges the two sections and the later value wins.
 | `hotend_fan` | `"hotend_fan"` | `[heater_fan NAME]`, watched by the optional tachometer monitor |
 | `motion_sensor`, `switch_sensor` | `""` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
 | `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` |
-| `led_dim`, `led_pin_dim` | `0.3` | LED_DIM levels |
 | `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections |
 
 An empty string or list disables a role. Devices that are not configured are skipped
@@ -79,7 +78,7 @@ without an error.
 | PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `Invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
 | RESET_FANS | Stops every configured controlled fan role. |
 | CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `Invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
-| LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. |
+| LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. LED_DIM uses the `neopixel_level` and `pin_level` variables of `[gcode_macro LED_DIM]` (default 0.3 each); override them in a file included after the package. |
 | DUMP_FAN | Prints the configured part fan's status. |
 | MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). Anything else, including text, leaves the sensor as it is and reports `MOTION_SENSOR ENABLE must be 0 or 1`, so a typo cannot disable runout detection. |
 | RELEASE_Z | Runs `M84 Z`. Stock Klipper disables **all** motors for this. |
