@@ -5,6 +5,10 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+### Changed
+- `LED_DIM` dims to 0.33 by default, for the neopixels and the output pins alike (it was 0.3), so
+  a printer sets the variables only to differ from that.
+
 ## [3.0.0] - 2026-10-27
 
 ### Changed
