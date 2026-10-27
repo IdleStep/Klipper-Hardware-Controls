@@ -54,13 +54,9 @@ class Settings(unittest.TestCase):
         self.assertEqual([command for command in printer.commands if command.startswith(controls)],
                          [])
 
-    def test_the_example_local_file_sets_every_role_and_only_those(self):
-        self.assertEqual(self.roles(HW / 'examples/hardware-local.cfg').keys(),
-                         self.roles(HW / 'settings.cfg').keys())
-
     def test_the_test_printers_local_file_sets_only_roles_that_exist(self):
         self.assertLessEqual(self.roles(HW / 'tests/klippy/hardware-local.cfg').keys(),
-                             self.roles(HW / 'settings.cfg').keys())
+                             self.roles(HW / 'hardware_names.cfg').keys())
 
 
 class Fans(Responds):
@@ -277,7 +273,7 @@ class FanTachMonitor(unittest.TestCase):
     def test_a_missing_fan_or_tachometer_is_skipped_and_said_once(self):
         for rpm, message in [
                 ('missing', 'Hotend fan is not monitored - no heater_fan hotend_fan exists. '
-                            'Set fan_name in HOTEND_FAN_CHECK.'),
+                            'Set hotend_fan in hardware-local.cfg.'),
                 (None, 'Hotend fan is not monitored - heater_fan hotend_fan has no '
                        'tachometer_pin.')]:
             with self.subTest(rpm=rpm):
@@ -295,14 +291,14 @@ class FanTachMonitor(unittest.TestCase):
         printer.state['heater_fan nozzle_fan'] = printer.state.pop('heater_fan hotend_fan')
         printer.state['configfile'].settings['heater_fan nozzle_fan'] = (
             printer.state['configfile'].settings.pop('heater_fan hotend_fan'))
-        printer.state['gcode_macro HOTEND_FAN_CHECK'].fan_name = 'nozzle_fan'
+        printer.state['gcode_macro _HARDWARE_VARS'].hotend_fan = 'nozzle_fan'
         for _ in range(3):
             printer.run('HOTEND_FAN_CHECK')
         self.assertIn('PAUSE', printer.commands)
 
     def test_a_fan_that_is_not_the_named_one_is_not_watched(self):
         printer = self.printer_with_rpm(0.)
-        printer.state['gcode_macro HOTEND_FAN_CHECK'].fan_name = 'nozzle_fan'
+        printer.state['gcode_macro _HARDWARE_VARS'].hotend_fan = 'nozzle_fan'
         for _ in range(3):
             printer.run('HOTEND_FAN_CHECK')
         self.assertNotIn('PAUSE', printer.commands)

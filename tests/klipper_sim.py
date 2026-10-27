@@ -24,7 +24,7 @@ import jinja2
 HW_ROOT = pathlib.Path(
     os.environ.get('HARDWARE_CONTROLS_ROOT') or pathlib.Path(__file__).parents[1]).resolve()
 HARDWARE_MODULES = [
-    'settings', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
+    'hardware_names', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
 # The test printers' hardware-local.cfg, included after the modules like a printer's own.
 # It lives beside the real-firmware scripts, which include the same file.
 HARDWARE_LOCAL = pathlib.Path(__file__).resolve().parent / 'klippy' / 'hardware-local.cfg'

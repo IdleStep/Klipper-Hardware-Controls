@@ -32,7 +32,7 @@ git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git
 [Configuration](#configuration)). Without it the package controls only the stock devices:
 the bed heater, the part fan `fan` and the X and Y steppers.
 
-Or include `settings.cfg` followed by only the modules you need:
+Or include `hardware_names.cfg` followed by only the modules you need:
 
 | Module | Commands |
 |---|---|
@@ -43,18 +43,17 @@ Or include `settings.cfg` followed by only the modules you need:
 | `sensors.cfg` | MOTION_SENSOR, SWITCH_SENSOR, delayed ENABLE_MOTION_SENSOR |
 | `release_steppers.cfg` | RELEASE_Z, RELEASE_XY |
 
-Chamber cooldown needs `settings.cfg`, `fans.cfg` and `chamber.cfg`. Never load
+Chamber cooldown needs `hardware_names.cfg`, `fans.cfg` and `chamber.cfg`. Never load
 the bundle and individual modules together.
 
 ## Configuration
 
 Physical devices (pins, sensor types, heater verification, power limits) stay in
 your printer configuration. This package only needs to know their names, set in
-`_HARDWARE_VARS`. `settings.cfg` holds the defaults, which are off for every role that
-depends on your own devices. Copy
-[`examples/hardware-local.cfg`](examples/hardware-local.cfg) outside this checkout, name
-your devices, delete the roles your printer does not have and include it after the
-package. Klipper merges the two sections and the later value wins.
+`_HARDWARE_VARS`. `hardware_names.cfg` holds the defaults, which are off for every role
+that depends on your own devices. Copy it outside this checkout as `hardware-local.cfg`,
+keep only the roles your printer sets, give them your devices' names and include it after
+the package. Klipper merges the two sections and the later value wins.
 
 | Variable | Default | Refers to |
 |---|---|---|
@@ -63,6 +62,7 @@ package. Klipper merges the two sections and the later value wins.
 | `bed_heater` | `"heater_bed"` | full object name |
 | `exhaust_fan`, `bed_fans`, `external_pc` | `""` | `[fan_generic NAME]` |
 | `part_fan` | `"fan"` | `fan` (M106) or `fan_generic NAME` |
+| `hotend_fan` | `"hotend_fan"` | `[heater_fan NAME]`, watched by the optional tachometer monitor |
 | `motion_sensor`, `switch_sensor` | `""` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
 | `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` |
 | `led_dim`, `led_pin_dim` | `0.3` | LED_DIM levels |
@@ -123,18 +123,29 @@ still turned off. The check is skipped when the fan is missing or reports no RPM
 misconfigured fan cannot cause false pauses; the console says so once, so a monitor that
 watches nothing is not silent.
 
-The fan and the limits are the `fan_name`, `min_rpm`, `max_consecutive_stops` and
-`check_seconds` variables of `[gcode_macro HOTEND_FAN_CHECK]`; override them in a local
-file included after the monitor. `fan_name` is the name after the section type, so
-`"nozzle_fan"` for `[heater_fan nozzle_fan]`. To change what happens on a stoppage,
-override `FAN_STOPPAGE_ROUTINE`. The
-idea comes from the fan tach monitor in Andrew Ellis's Print-Tuning-Guide; this file
-is written for this package.
+The fan is the `hotend_fan` role of `_HARDWARE_VARS`, the name after the section type, so
+`"nozzle_fan"` for `[heater_fan nozzle_fan]`. The limits are the `min_rpm`,
+`max_consecutive_stops` and `check_seconds` variables of `[gcode_macro HOTEND_FAN_CHECK]`;
+override them in a local file included after the monitor. To change what happens on a
+stoppage, override `FAN_STOPPAGE_ROUTINE`. The idea comes from the fan tach monitor in
+Andrew Ellis's Print-Tuning-Guide; this file is written for this package.
 
 ## Updates and rollback
 
-Add [`examples/moonraker.conf`](examples/moonraker.conf) to `moonraker.conf`. It
-follows tagged releases (`channel: stable`); use `channel: dev` to follow `main`.
+Add this to `moonraker.conf`. It follows tagged releases (`channel: stable`); use
+`channel: dev` to follow `main`.
+
+```ini
+[update_manager Klipper-Hardware-Controls]
+type: git_repo
+channel: stable
+path: ~/printer_data/config/Klipper-Hardware-Controls
+origin: https://github.com/IdleStep/Klipper-Hardware-Controls.git
+primary_branch: main
+is_system_service: False
+managed_services: klipper
+```
+
 Update and restart only while the printer is idle, keep overrides outside the
 checkout, and record the tested revision for each printer. To roll back, check
 out the previous tag and restart. Each tag has a
