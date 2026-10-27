@@ -5,6 +5,8 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-27
+
 ### Changed
 - Tests: the config lint asks for a description only of a macro that has `gcode`, so a printer
   file can set the variables of a macro of the package, such as `LED_DIM`, without repeating it.
@@ -129,7 +131,8 @@ instead; it is no longer part of the bundle. Restart while idle and check that e
 command still exists. To roll back, restore the old includes and the files that called the
 helpers together, then restart while idle.
 
-[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.0.0...v1.1.0
