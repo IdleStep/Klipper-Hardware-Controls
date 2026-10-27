@@ -26,6 +26,21 @@ class ConfigLint(unittest.TestCase):
         self.assertEqual(
             self.problems('[delayed_gcode WAKE]\ninitial_duration: 1\ngcode:\n  M117 hi\n'), [])
 
+    def test_a_misspelt_macro_option_is_reported(self):
+        problems = self.problems(
+            '[gcode_macro HELLO]\ndescripton: Say hello\ngcode:\n  M117 hi\n')
+        self.assertEqual(problems, [
+            '[gcode_macro HELLO] has no description',
+            '[gcode_macro HELLO] has options stock Klipper rejects: descripton'])
+
+    def test_a_macro_with_the_options_klipper_reads_is_clean(self):
+        self.assertEqual(self.problems(
+            '[gcode_macro HELLO]\ndescription: Say hello\nrename_existing: HELLO_BASE\n'
+            'variable_count: 0\ngcode:\n  M117 hi\n'), [])
+
+    def test_other_section_types_are_not_checked(self):
+        self.assertEqual(self.problems('[heater_bed]\ncontrol: mpc\n'), [])
+
 
 if __name__ == '__main__':
     unittest.main()

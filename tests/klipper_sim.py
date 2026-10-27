@@ -24,7 +24,10 @@ import jinja2
 HW_ROOT = pathlib.Path(
     os.environ.get('HARDWARE_CONTROLS_ROOT') or pathlib.Path(__file__).parents[1]).resolve()
 HARDWARE_MODULES = [
-    'settings', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
+    'hardware_names', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
+# The test printers' hardware-local.cfg, included after the modules like a printer's own.
+# It lives beside the real-firmware scripts, which include the same file.
+HARDWARE_LOCAL = pathlib.Path(__file__).resolve().parent / 'klippy' / 'hardware-local.cfg'
 DEFAULT_IDLE_TIMEOUT = 4800.
 
 
@@ -90,20 +93,27 @@ class Printer:
         if hardware:
             for name in HARDWARE_MODULES:
                 self.load(HW_ROOT / (name + '.cfg'))
+            self.load(HARDWARE_LOCAL)
 
     def load(self, path):
-        """Register every macro in a config file; gcode_macro variables become state."""
+        """Register every macro in a config file; gcode_macro variables become state.
+
+        Like Klipper, a section that is loaded again is merged: its variables replace the
+        earlier ones and it keeps the earlier gcode unless it has its own.
+        """
         cfg = configparser.RawConfigParser(delimiters=(':',), strict=True)
         cfg.read_string(pathlib.Path(path).read_text(encoding='utf-8'))
         for section in cfg.sections():
             if not section.startswith(('gcode_macro ', 'delayed_gcode ')):
                 continue
             kind, name = section.split(' ', 1)
-            self.templates[name.upper()] = self.env.from_string(cfg[section].get('gcode', ''))
+            if cfg.has_option(section, 'gcode') or name.upper() not in self.templates:
+                self.templates[name.upper()] = self.env.from_string(cfg[section].get('gcode', ''))
             if kind == 'gcode_macro':
-                self.state[section] = wrap({key[len('variable_'):]: ast.literal_eval(value)
-                                            for key, value in cfg[section].items()
-                                            if key.startswith('variable_')})
+                self.state.setdefault(section, State()).update(
+                    wrap({key[len('variable_'):]: ast.literal_eval(value)
+                          for key, value in cfg[section].items()
+                          if key.startswith('variable_')}))
 
     def run(self, command, **params):
         """Render a macro and execute what it emits. Returns the rendered text."""

@@ -5,3 +5,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  # The Jinja2 version the tests render with (requirements-test.txt).
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly

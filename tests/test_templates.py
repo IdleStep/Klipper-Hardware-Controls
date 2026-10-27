@@ -6,10 +6,11 @@ Requires Jinja2 3.1.6. No printer access and no hardware commands are transmitte
 Test classes follow the order of the modules they cover: settings, fans, chamber,
 leds, sensors, release_steppers, then the optional fan tachometer monitor.
 """
+import ast
 import configparser
 import unittest
 
-from klipper_sim import HW_ROOT as HW, Printer, State, wrap
+from klipper_sim import HARDWARE_MODULES, HW_ROOT as HW, Printer, State, wrap
 
 
 class Responds(unittest.TestCase):
@@ -27,6 +28,35 @@ class Loading(unittest.TestCase):
         cfg.read(HW / 'sensors.cfg')
         self.assertNotIn('initial_duration', cfg['delayed_gcode ENABLE_MOTION_SENSOR'])
         self.assertNotIn('delayed_gcode DISABLE_SENSORS', cfg)
+
+
+class Settings(unittest.TestCase):
+    def roles(self, path):
+        cfg = configparser.RawConfigParser(delimiters=(':',))
+        cfg.read(path, encoding='utf-8')
+        return {key: ast.literal_eval(value)
+                for key, value in cfg['gcode_macro _HARDWARE_VARS'].items()
+                if key.startswith('variable_')}
+
+    def test_a_printer_without_a_local_file_controls_only_the_stock_devices(self):
+        printer = Printer(hardware=False)
+        for name in HARDWARE_MODULES:
+            printer.load(HW / (name + '.cfg'))
+        printer.state['neopixel discostick'] = State()
+        printer.state['output_pin daystick'] = State()
+        for command, params in [('EXHAUST_FAN', {'SPEED': 1}), ('BED_FANS', {'SPEED': 1}),
+                                ('EXTERNAL_PC', {'SPEED': 1}), ('CHAMBER', {'TEMP': 40}),
+                                ('LED_ON', {}), ('LED_DIM', {}), ('LED_OFF', {}),
+                                ('MOTION_SENSOR', {'ENABLE': 0}), ('SWITCH_SENSOR', {'ENABLE': 0})]:
+            printer.run(command, **params)
+        controls = ('SET_FAN_SPEED', 'SET_HEATER_TEMPERATURE', 'SET_LED', 'SET_PIN',
+                    'SET_FILAMENT_SENSOR')
+        self.assertEqual([command for command in printer.commands if command.startswith(controls)],
+                         [])
+
+    def test_the_test_printers_local_file_sets_only_roles_that_exist(self):
+        self.assertLessEqual(self.roles(HW / 'tests/klippy/hardware-local.cfg').keys(),
+                             self.roles(HW / 'hardware_names.cfg').keys())
 
 
 class Fans(Responds):
@@ -238,17 +268,41 @@ class FanTachMonitor(unittest.TestCase):
         printer.run('HOTEND_FAN_CHECK')
         printer.state['heater_fan hotend_fan'].rpm = 9000.
         printer.run('HOTEND_FAN_CHECK')
-        self.assertEqual(printer.state['gcode_macro HOTEND_FAN_CHECK'].he_stop_count, 0)
+        self.assertEqual(printer.state['gcode_macro _HOTEND_FAN_STATE'].stops, 0)
 
-    def test_a_missing_fan_or_tachometer_is_skipped(self):
-        for rpm in ['missing', None]:
+    def test_a_missing_fan_or_tachometer_is_skipped_and_said_once(self):
+        for rpm, message in [
+                ('missing', 'Hotend fan is not monitored - no heater_fan hotend_fan exists. '
+                            'Set hotend_fan in hardware-local.cfg.'),
+                (None, 'Hotend fan is not monitored - heater_fan hotend_fan has no '
+                       'tachometer_pin.')]:
             with self.subTest(rpm=rpm):
                 printer = self.printer_with_rpm(rpm)
                 for _ in range(5):
-                    printer.run('CHECK_ALL_FANS')
+                    printer.run('HOTEND_FAN_MONITOR')
                 self.assertNotIn('PAUSE', printer.commands)
-                self.assertFalse(any(command.startswith('SET_GCODE_VARIABLE')
-                                     for command in printer.commands))
+                self.assertEqual(printer.state['gcode_macro _HOTEND_FAN_STATE'].stops, 0)
+                self.assertEqual(
+                    [command for command in printer.commands if command.startswith('RESPOND')],
+                    ['RESPOND PREFIX="⚠️" MSG="%s"' % message])
+
+    def test_the_watched_fan_can_have_another_name(self):
+        printer = self.printer_with_rpm(0.)
+        printer.state['heater_fan nozzle_fan'] = printer.state.pop('heater_fan hotend_fan')
+        printer.state['configfile'].settings['heater_fan nozzle_fan'] = (
+            printer.state['configfile'].settings.pop('heater_fan hotend_fan'))
+        printer.state['gcode_macro _HARDWARE_VARS'].hotend_fan = 'nozzle_fan'
+        for _ in range(3):
+            printer.run('HOTEND_FAN_CHECK')
+        self.assertIn('PAUSE', printer.commands)
+
+    def test_a_fan_that_is_not_the_named_one_is_not_watched(self):
+        printer = self.printer_with_rpm(0.)
+        printer.state['gcode_macro _HARDWARE_VARS'].hotend_fan = 'nozzle_fan'
+        for _ in range(3):
+            printer.run('HOTEND_FAN_CHECK')
+        self.assertNotIn('PAUSE', printer.commands)
+        self.assertIn('no heater_fan nozzle_fan exists', printer.commands[-1])
 
 
 if __name__ == '__main__':
