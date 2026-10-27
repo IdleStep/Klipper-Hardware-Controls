@@ -39,7 +39,7 @@ below.
   1.0.0 entry.
 - Tests: the config lint rejects any `gcode_macro` option that stock Klipper does not read
   (a misspelt `description` stops Klipper from loading), not only `delayed_gcode` ones. The
-  real-firmware fan scripts assert the fan speeds that result, and a new script runs
+  real-firmware fan scripts assert the fan speeds the commands ask for, and a new script runs
   `FAN_STOPPAGE_ROUTINE` and asserts the pause and the hotend target. The simulator and the
   firmware runs include `tests/klippy/hardware-local.cfg` after the package, as a printer
   includes its own file.
