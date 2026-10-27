@@ -17,6 +17,7 @@ KLIPPY_REQUIRED=1 to make skipping an error):
 import configparser
 import os
 import pathlib
+import re
 import subprocess
 import tempfile
 import unittest
@@ -65,6 +66,13 @@ def run_script(printer_cfg, gcode, links):
         return result.returncode, log + result.stdout + result.stderr
 
 
+def error_lines(log):
+    """The log lines that say what went wrong; klippy ends its log with the whole config."""
+    lines = [line for line in log.splitlines()
+             if re.search(r'error|unknown|exception|traceback', line, re.IGNORECASE)]
+    return '\n'.join(lines[:30]) + '\n---\n'
+
+
 def run_script_files(test_case, script_dir, printer_cfg, links):
     """Run every *.gcode in script_dir as a subtest. Scripts named *_fails.gcode
     must make klippy exit with an error; all others must succeed."""
@@ -78,4 +86,4 @@ def run_script_files(test_case, script_dir, printer_cfg, links):
             if script.stem.endswith('_fails'):
                 test_case.assertTrue(failed, 'expected an error from %s' % script.name)
             else:
-                test_case.assertFalse(failed, log[-3000:])
+                test_case.assertFalse(failed, error_lines(log) + log[-3000:])
