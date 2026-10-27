@@ -43,6 +43,13 @@ Klipper-Configs. A change that follows them must not change what the printer doe
   start with `_`.
 - Single letters are for loop indices only. In tests: `printer`, `command`, `message`.
 
+## Moonraker
+
+An `[update_manager]` section is named after the repository it updates, exactly:
+`[update_manager Klipper-Hardware-Controls]`, `[update_manager Klipper-Chamber-Cooldown]`,
+`[update_manager Klipper-Configs]`. A printer does not use another name for it
+(`git_klipper_configs`, `hardware_controls`).
+
 ## Comments
 
 Comments say why, never what. They sit on the line above the code, as sentences. Do not

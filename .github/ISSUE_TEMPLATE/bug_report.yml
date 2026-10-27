@@ -24,5 +24,5 @@ body:
   - type: textarea
     id: config
     attributes:
-      label: Your hardware-local.cfg
+      label: Your hardware_names.cfg
       description: Only the part that sets `_HARDWARE_VARS`. Remove anything private.

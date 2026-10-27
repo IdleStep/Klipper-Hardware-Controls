@@ -55,7 +55,7 @@ class Settings(unittest.TestCase):
                          [])
 
     def test_the_test_printers_local_file_sets_only_roles_that_exist(self):
-        self.assertLessEqual(self.roles(HW / 'tests/klippy/hardware-local.cfg').keys(),
+        self.assertLessEqual(self.roles(HW / 'tests/klippy/hardware_names.cfg').keys(),
                              self.roles(HW / 'hardware_names.cfg').keys())
 
 
@@ -273,7 +273,7 @@ class FanTachMonitor(unittest.TestCase):
     def test_a_missing_fan_or_tachometer_is_skipped_and_said_once(self):
         for rpm, message in [
                 ('missing', 'Hotend fan is not monitored - no heater_fan hotend_fan exists. '
-                            'Set hotend_fan in hardware-local.cfg.'),
+                            'Set hotend_fan in your hardware_names.cfg.'),
                 (None, 'Hotend fan is not monitored - heater_fan hotend_fan has no '
                        'tachometer_pin.')]:
             with self.subTest(rpm=rpm):

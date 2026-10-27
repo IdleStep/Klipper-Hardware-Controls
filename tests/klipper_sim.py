@@ -38,9 +38,9 @@ def module_path(name):
     return path
 
 
-# The test printers' hardware-local.cfg, included after the modules like a printer's own.
+# The test printers' own hardware_names.cfg, included after the modules like a printer's.
 # It lives beside the real-firmware scripts, which include the same file.
-HARDWARE_LOCAL = pathlib.Path(__file__).resolve().parent / 'klippy' / 'hardware-local.cfg'
+HARDWARE_LOCAL = pathlib.Path(__file__).resolve().parent / 'klippy' / 'hardware_names.cfg'
 DEFAULT_IDLE_TIMEOUT = 4800.
 
 

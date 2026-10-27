@@ -25,12 +25,12 @@ git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git
 
 ```ini
 [include Klipper-Hardware-Controls/hardware.cfg]
-[include hardware-local.cfg]
+[include hardware_names.cfg]
 ```
 
-`hardware-local.cfg` is your own file, outside the checkout, that names your devices (see
-[Configuration](#configuration)). Without it the package controls only the stock devices:
-the bed heater, the part fan `fan` and the X and Y steppers.
+The second line is your own copy of `hardware_names.cfg`, outside the checkout, that names
+your devices (see [Configuration](#configuration)). Without it the package controls only the
+stock devices: the bed heater, the part fan `fan` and the X and Y steppers.
 
 Or include `hardware_names.cfg` followed by only the modules you need:
 
@@ -51,7 +51,7 @@ the bundle and individual modules together.
 Physical devices (pins, sensor types, heater verification, power limits) stay in
 your printer configuration. This package only needs to know their names, set in
 `_HARDWARE_VARS`. `hardware_names.cfg` holds the defaults, which are off for every role
-that depends on your own devices. Copy it outside this checkout as `hardware-local.cfg`,
+that depends on your own devices. Copy it outside this checkout, next to your `printer.cfg`,
 keep only the roles your printer sets, give them your devices' names and include it after
 the package. Klipper merges the two sections and the later value wins.
 
@@ -160,7 +160,7 @@ python -m unittest discover -s tests -v
 
 - `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
   Klipper-Chamber-Cooldown and Klipper-Configs reuse it. It includes
-  `tests/klippy/hardware-local.cfg`, the local file of the test printers, after the
+  `tests/klippy/hardware_names.cfg`, the test printers' own copy, after the
   package, as a printer does.
 - `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
   tabs, trailing whitespace, malformed `RESPOND` messages, missing macro
