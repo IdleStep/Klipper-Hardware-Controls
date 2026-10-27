@@ -44,7 +44,8 @@ below.
   real-firmware fan scripts assert the fan speeds the commands ask for, and a new script runs
   `FAN_STOPPAGE_ROUTINE` and asserts the pause and the hotend target. The simulator and the
   firmware runs include `tests/klippy/hardware-local.cfg` after the package, as a printer
-  includes its own file.
+  includes its own file. The simulator reads `settings.cfg` when the checkout under test is
+  older than 2.0.0, which Cooldown's checks use for the oldest supported release.
 
 ## [1.2.0] - 2026-10-25
 

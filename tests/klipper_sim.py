@@ -4,7 +4,7 @@ It renders real gcode_macro / delayed_gcode templates with Klipper's Jinja
 delimiters and executes the commands they emit against an in-memory printer
 state. No printer is contacted. Klipper-Chamber-Cooldown and Klipper-Configs
 import this module from their Hardware-Controls checkout, so keep the public
-names (State, wrap, Printer, HW_ROOT, HARDWARE_MODULES) stable.
+names (State, wrap, Printer, HW_ROOT, HARDWARE_MODULES, module_path) stable.
 
 HARDWARE_CONTROLS_ROOT, when set, loads the package configs from another
 checkout (cooldown CI uses it to test against the oldest supported release).
@@ -25,6 +25,19 @@ HW_ROOT = pathlib.Path(
     os.environ.get('HARDWARE_CONTROLS_ROOT') or pathlib.Path(__file__).parents[1]).resolve()
 HARDWARE_MODULES = [
     'hardware_names', 'fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers']
+
+
+def module_path(name):
+    """The config file of a module in the checkout under test.
+
+    Before 2.0.0 hardware_names.cfg was called settings.cfg.
+    """
+    path = HW_ROOT / (name + '.cfg')
+    if name == 'hardware_names' and not path.exists():
+        path = HW_ROOT / 'settings.cfg'
+    return path
+
+
 # The test printers' hardware-local.cfg, included after the modules like a printer's own.
 # It lives beside the real-firmware scripts, which include the same file.
 HARDWARE_LOCAL = pathlib.Path(__file__).resolve().parent / 'klippy' / 'hardware-local.cfg'
@@ -92,7 +105,7 @@ class Printer:
                                       variable_start_string='{', variable_end_string='}')
         if hardware:
             for name in HARDWARE_MODULES:
-                self.load(HW_ROOT / (name + '.cfg'))
+                self.load(module_path(name))
             self.load(HARDWARE_LOCAL)
 
     def load(self, path):
