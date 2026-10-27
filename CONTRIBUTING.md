@@ -24,3 +24,8 @@ how to run them locally.
 
 The version follows the public command API, as the CHANGELOG explains. Releases are
 annotated tags named `vMAJOR.MINOR.PATCH`; Moonraker's `channel: stable` follows them.
+
+To release: in a pull request, rename `[Unreleased]` in the CHANGELOG to the version and
+date, add the compare link at the bottom and a fresh `[Unreleased]` heading above it. After
+it is merged, tag the merge commit. The Release workflow publishes the GitHub Release from
+that CHANGELOG section and fails when the tag has none.

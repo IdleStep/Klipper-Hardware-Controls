@@ -1,9 +1,29 @@
+; Queued fan commands reach the printer status when the toolhead flushes, which M400 does.
 EXHAUST_FAN SPEED=0.5
 EXTERNAL_PC SPEED=1
 BED_FANS SPEED=0.4
-PART_COOLING SPEED=0.5
+PART_COOLING SPEED=0.25
+M400
+ASSERT_STATUS OBJECT=fan_generic:exhaust_fan FIELD=speed VALUE=0.5
+ASSERT_STATUS OBJECT=fan_generic:external_pc FIELD=speed VALUE=1
+ASSERT_STATUS OBJECT=fan_generic:bed_fans FIELD=speed VALUE=0.4
+ASSERT_STATUS OBJECT=fan FIELD=speed VALUE=0.25
+; 1.1 to 100 is a percentage.
 PART_COOLING SPEED=50
+M400
+ASSERT_STATUS OBJECT=fan FIELD=speed VALUE=0.5
+; Out of range or not a number turns the part fan off.
 PART_COOLING SPEED=255
+M400
+ASSERT_STATUS OBJECT=fan FIELD=speed VALUE=0
+PART_COOLING SPEED=0.5
 PART_COOLING SPEED=abc
+M400
+ASSERT_STATUS OBJECT=fan FIELD=speed VALUE=0
 RESET_FANS
+M400
+ASSERT_STATUS OBJECT=fan_generic:exhaust_fan FIELD=speed VALUE=0
+ASSERT_STATUS OBJECT=fan_generic:external_pc FIELD=speed VALUE=0
+ASSERT_STATUS OBJECT=fan_generic:bed_fans FIELD=speed VALUE=0
+ASSERT_STATUS OBJECT=fan FIELD=speed VALUE=0
 DUMP_FAN

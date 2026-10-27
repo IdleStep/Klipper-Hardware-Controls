@@ -4,15 +4,22 @@ Catches what the template tests cannot: files Klipper would fail to parse,
 broken includes, tab or mixed indentation, trailing whitespace, CRLF endings,
 RESPOND messages with stray double quotes, public macros without a
 description (Mainsail and Fluidd show it in their macro lists) and
-delayed_gcode options that stock Klipper does not read, which it rejects at load.
+gcode_macro or delayed_gcode options that stock Klipper does not read, which it
+rejects at load.
 """
 import configparser
 import pathlib
 import re
 
 RESPOND_MSG = re.compile(r'\bMSG="[^"]*"\s*$')
-# Kalico also reads description here; stock Klipper fails to load a config that has one.
-DELAYED_GCODE_OPTIONS = {'gcode', 'initial_duration'}
+# The options stock Klipper reads in each section type: exact names, then name prefixes.
+# It fails to load a config with any other option (a misspelt `descripton` too). Kalico
+# reads more, for example description in a delayed_gcode, so a file that loads there can
+# still fail on stock Klipper. Section types that are not listed here are not checked.
+ALLOWED_OPTIONS = {
+    'delayed_gcode': ({'gcode', 'initial_duration'}, ()),
+    'gcode_macro': ({'description', 'gcode', 'rename_existing'}, ('variable_',)),
+}
 
 
 def config_files(root, skip=()):
@@ -55,8 +62,11 @@ def lint_file(path, check_includes=True):
         if section.startswith('gcode_macro ') and not section.split(' ', 1)[1].startswith('_'):
             if not cfg[section].get('description', '').strip():
                 problems.append('[%s] has no description' % section)
-        if section.startswith('delayed_gcode '):
-            unknown = sorted(set(cfg[section]) - DELAYED_GCODE_OPTIONS)
+        kind, _, name = section.partition(' ')
+        if name and kind in ALLOWED_OPTIONS:
+            names, prefixes = ALLOWED_OPTIONS[kind]
+            unknown = sorted(option for option in cfg[section]
+                             if option not in names and not option.startswith(prefixes))
             if unknown:
                 problems.append('[%s] has options stock Klipper rejects: %s'
                                 % (section, ', '.join(unknown)))

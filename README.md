@@ -1,5 +1,7 @@
 # Klipper Hardware Controls
 
+[![Hardware template checks](https://github.com/IdleStep/Klipper-Hardware-Controls/actions/workflows/templates.yml/badge.svg)](https://github.com/IdleStep/Klipper-Hardware-Controls/actions/workflows/templates.yml)
+
 Reusable hardware commands (fans, chamber heater, LEDs, filament sensors,
 stepper release) for Klipper and Kalico configurations. Klipper-Configs and
 [Klipper-Chamber-Cooldown](https://github.com/IdleStep/Klipper-Chamber-Cooldown)
@@ -8,9 +10,18 @@ build on it; it depends only on standard Klipper macros and `[respond]`.
 Public command API: **version 1**. Commands, parameters and `_HARDWARE_VARS`
 names stay compatible within version 1. See the [changelog](CHANGELOG.md).
 
+Tested with Klipper (Jinja 2.11) and Kalico (Jinja 3.1), loaded in the real firmware, at
+the revisions pinned in [`templates.yml`](.github/workflows/templates.yml) and every week
+against their newest. Older firmware is not tested.
+
 ## Install
 
-Clone into `~/printer_data/config/Klipper-Hardware-Controls`, then include once:
+Clone into `~/printer_data/config`, then include once:
+
+```sh
+cd ~/printer_data/config
+git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git
+```
 
 ```ini
 [include Klipper-Hardware-Controls/hardware.cfg]
@@ -117,8 +128,9 @@ Add [`examples/moonraker.conf`](examples/moonraker.conf) to `moonraker.conf`. It
 follows tagged releases (`channel: stable`); use `channel: dev` to follow `main`.
 Update and restart only while the printer is idle, keep overrides outside the
 checkout, and record the tested revision for each printer. To roll back, check
-out the previous tag and restart. Moving from the old Klipper-Configs helpers is
-covered in [docs/MIGRATION.md](docs/MIGRATION.md).
+out the previous tag and restart. Each tag has a
+[release](https://github.com/IdleStep/Klipper-Hardware-Controls/releases) with its
+changelog entry.
 
 ## Tests
 
@@ -130,12 +142,14 @@ python -m unittest discover -s tests -v
 - `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
   Klipper-Chamber-Cooldown and Klipper-Configs reuse it.
 - `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
-  tabs, trailing whitespace, malformed `RESPOND` messages and missing macro
-  descriptions.
+  tabs, trailing whitespace, malformed `RESPOND` messages, missing macro
+  descriptions and `gcode_macro` or `delayed_gcode` options that stock Klipper
+  does not read.
 - `tests/test_klippy.py` loads the package in real Klipper and Kalico without
-  hardware and runs `tests/klippy/*.gcode`. It is skipped unless `KLIPPER_DIR`,
-  `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows how to build
-  them.
+  hardware and runs `tests/klippy/*.gcode`, which assert fan speeds, heater
+  targets and the pause state after the commands. It is skipped unless
+  `KLIPPER_DIR`, `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows
+  how to build them.
 
 ## Contributing
 
