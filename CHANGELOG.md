@@ -5,6 +5,8 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-27
+
 This is a major release. Before a printer updates, copy the roles it uses from the old
 `settings.cfg` into its own `hardware_names.cfg`. The old defaults were `chamber_heater`
 `"chamber"`, `chamber_sensor` `"heater_generic chamber"`, `exhaust_fan` `"exhaust_fan"`,
@@ -118,7 +120,8 @@ instead; it is no longer part of the bundle. Restart while idle and check that e
 command still exists. To roll back, restore the old includes and the files that called the
 helpers together, then restart while idle.
 
-[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/tree/v1.0.0
