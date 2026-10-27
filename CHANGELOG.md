@@ -6,7 +6,7 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 ## [Unreleased]
 
 This is a major release. Before a printer updates, copy the roles it uses from the old
-`settings.cfg` into its `hardware-local.cfg`. The old defaults were `chamber_heater`
+`settings.cfg` into its own `hardware_names.cfg`. The old defaults were `chamber_heater`
 `"chamber"`, `chamber_sensor` `"heater_generic chamber"`, `exhaust_fan` `"exhaust_fan"`,
 `bed_fans` `"bed_fans"`, `external_pc` `"external_pc"`, `motion_sensor` `"motion_sensor"`,
 `switch_sensor` `"switch_sensor"`, `led_neopixels` `["discostick", "th_leds"]`, `led_pins`
@@ -22,17 +22,18 @@ below.
 ### Changed
 - Breaking: `settings.cfg` is now `hardware_names.cfg`, which says what it holds, and it no
   longer holds the names of the author's printers. Every role that depends on a printer's
-  own devices is off until its `hardware-local.cfg` names the device: `chamber_heater`,
+  own devices is off until its own `hardware_names.cfg` names the device: `chamber_heater`,
   `chamber_sensor`, `exhaust_fan`, `bed_fans`, `external_pc`, `motion_sensor` and
   `switch_sensor` are `""`, `led_neopixels` and `led_pins` are `[]`, and `led_dim` and
   `led_pin_dim` are `0.3`. `bed_heater`, `part_fan` and
-  `release_xy_steppers` keep their stock names. A printer's `hardware-local.cfg` starts
+  `release_xy_steppers` keep their stock names. A printer's own `hardware_names.cfg` starts
   as a copy of `hardware_names.cfg`; `examples/` is gone, and the Moonraker section is in
   the README.
 - Breaking: the optional tachometer monitor's loop `CHECK_ALL_FANS` is now
   `HOTEND_FAN_MONITOR`, which says what it watches, and its stop counter `he_stop_count`
   is `stops` in the new `_HOTEND_FAN_STATE` macro. A local override of the
   `HOTEND_FAN_CHECK` settings no longer has to repeat the counter.
+- `docs/STYLE.md` says that an `[update_manager]` section is named after its repository.
 - SECURITY.md asks for a public issue instead of a private report.
 - The changelog has dates and compare links, and Dependabot also watches the Python test
   requirement.
@@ -43,7 +44,7 @@ below.
   (a misspelt `description` stops Klipper from loading), not only `delayed_gcode` ones. The
   real-firmware fan scripts assert the fan speeds the commands ask for, and a new script runs
   `FAN_STOPPAGE_ROUTINE` and asserts the pause and the hotend target. The simulator and the
-  firmware runs include `tests/klippy/hardware-local.cfg` after the package, as a printer
+  firmware runs include `tests/klippy/hardware_names.cfg` after the package, as a printer
   includes its own file. The simulator reads `settings.cfg` when the checkout under test is
   older than 2.0.0, which Cooldown's checks use for the oldest supported release.
 
