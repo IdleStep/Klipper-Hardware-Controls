@@ -28,6 +28,10 @@ git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git
 [include hardware-local.cfg]
 ```
 
+`hardware-local.cfg` is your own file, outside the checkout, that names your devices (see
+[Configuration](#configuration)). Without it the package controls only the stock devices:
+the bed heater, the part fan `fan` and the X and Y steppers.
+
 Or include `settings.cfg` followed by only the modules you need:
 
 | Module | Commands |
@@ -46,23 +50,25 @@ the bundle and individual modules together.
 
 Physical devices (pins, sensor types, heater verification, power limits) stay in
 your printer configuration. This package only needs to know their names, set in
-`_HARDWARE_VARS` (`settings.cfg`). Copy
-[`examples/hardware-local.cfg`](examples/hardware-local.cfg) outside this checkout,
-keep only the values that differ and include it after the package.
+`_HARDWARE_VARS`. `settings.cfg` holds the defaults, which are off for every role that
+depends on your own devices. Copy
+[`examples/hardware-local.cfg`](examples/hardware-local.cfg) outside this checkout, name
+your devices, delete the roles your printer does not have and include it after the
+package. Klipper merges the two sections and the later value wins.
 
 | Variable | Default | Refers to |
 |---|---|---|
-| `chamber_heater` | `"chamber"` | `[heater_generic NAME]` |
-| `chamber_sensor` | `"heater_generic chamber"` | full object name, read when there is no chamber heater |
+| `chamber_heater` | `""` | `[heater_generic NAME]` |
+| `chamber_sensor` | `""` | full object name, read when there is no chamber heater |
 | `bed_heater` | `"heater_bed"` | full object name |
-| `exhaust_fan`, `bed_fans`, `external_pc` | `"exhaust_fan"`, `"bed_fans"`, `"external_pc"` | `[fan_generic NAME]` |
+| `exhaust_fan`, `bed_fans`, `external_pc` | `""` | `[fan_generic NAME]` |
 | `part_fan` | `"fan"` | `fan` (M106) or `fan_generic NAME` |
-| `motion_sensor`, `switch_sensor` | `"motion_sensor"`, `"switch_sensor"` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
-| `led_neopixels`, `led_pins` | `["discostick", "th_leds"]`, `["daystick"]` | `[neopixel NAME]`, `[output_pin NAME]` |
-| `led_dim`, `led_pin_dim` | `0.3098`, `0.33` | LED_DIM levels |
+| `motion_sensor`, `switch_sensor` | `""` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
+| `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` |
+| `led_dim`, `led_pin_dim` | `0.3` | LED_DIM levels |
 | `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections |
 
-An empty string disables a role. Devices that are not configured are skipped
+An empty string or list disables a role. Devices that are not configured are skipped
 without an error.
 
 ## Commands
@@ -103,8 +109,8 @@ macros to save each sensor's state and for RESUME macros to restore it.
 ## Optional fan tachometer monitor
 
 `optional/fan_tach_monitor.cfg` watches the hotend fan's tachometer. It is excluded
-from `hardware.cfg`. Include it only on printers with `[heater_fan hotend_fan]`
-and a `tachometer_pin`:
+from `hardware.cfg`. Include it only on printers with a `[heater_fan]` that has a
+`tachometer_pin` (`hotend_fan` unless you name another, see below):
 
 ```ini
 [include Klipper-Hardware-Controls/optional/fan_tach_monitor.cfg]
@@ -113,12 +119,15 @@ and a `tachometer_pin`:
 It starts one second after Klipper starts and checks every three seconds. After
 three consecutive readings below 8000 RPM while the hotend is hot, it pauses the
 print and turns the hotend off. If the print is already paused, the hotend is
-still turned off. The check is skipped when `hotend_fan` is missing or reports no
-RPM, so a misconfigured fan cannot cause false pauses.
+still turned off. The check is skipped when the fan is missing or reports no RPM, so a
+misconfigured fan cannot cause false pauses; the console says so once, so a monitor that
+watches nothing is not silent.
 
-The limits are the `min_rpm`, `max_consecutive_stops` and `check_seconds` variables
-of `[gcode_macro HOTEND_FAN_CHECK]`; override them in a local file included after the
-monitor. To change what happens on a stoppage, override `FAN_STOPPAGE_ROUTINE`. The
+The fan and the limits are the `fan_name`, `min_rpm`, `max_consecutive_stops` and
+`check_seconds` variables of `[gcode_macro HOTEND_FAN_CHECK]`; override them in a local
+file included after the monitor. `fan_name` is the name after the section type, so
+`"nozzle_fan"` for `[heater_fan nozzle_fan]`. To change what happens on a stoppage,
+override `FAN_STOPPAGE_ROUTINE`. The
 idea comes from the fan tach monitor in Andrew Ellis's Print-Tuning-Guide; this file
 is written for this package.
 
@@ -140,7 +149,9 @@ python -m unittest discover -s tests -v
 ```
 
 - `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
-  Klipper-Chamber-Cooldown and Klipper-Configs reuse it.
+  Klipper-Chamber-Cooldown and Klipper-Configs reuse it. It includes
+  `tests/klippy/hardware-local.cfg`, the local file of the test printers, after the
+  package, as a printer does.
 - `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
   tabs, trailing whitespace, malformed `RESPOND` messages, missing macro
   descriptions and `gcode_macro` or `delayed_gcode` options that stock Klipper
