@@ -154,19 +154,19 @@ class Leds(unittest.TestCase):
         printer = Printer()
         printer.state['neopixel discostick'] = State()
         printer.state['output_pin daystick'] = State()
-        printer.state['gcode_macro LED_DIM'].neopixel_level = 0.3098
-        printer.state['gcode_macro LED_DIM'].pin_level = 0.33
+        printer.state['gcode_macro LED_DIM'].neopixel_level = 0.5
+        printer.state['gcode_macro LED_DIM'].pin_level = 0.25
         printer.run('LED_DIM')
-        self.assertIn('SET_PIN PIN=daystick VALUE=0.33', printer.commands)
-        self.assertTrue(any('RED=0.3098' in command for command in printer.commands))
+        self.assertIn('SET_PIN PIN=daystick VALUE=0.25', printer.commands)
+        self.assertTrue(any('RED=0.5 ' in command for command in printer.commands))
 
-    def test_the_dim_levels_default_to_0_3_for_both_kinds(self):
+    def test_the_dim_levels_default_to_0_33_for_both_kinds(self):
         printer = Printer()
         printer.state['neopixel discostick'] = State()
         printer.state['output_pin daystick'] = State()
         printer.run('LED_DIM')
-        self.assertIn('SET_PIN PIN=daystick VALUE=0.3', printer.commands)
-        self.assertTrue(any('RED=0.3 ' in command for command in printer.commands))
+        self.assertIn('SET_PIN PIN=daystick VALUE=0.33', printer.commands)
+        self.assertTrue(any('RED=0.33 ' in command for command in printer.commands))
 
 
 class Sensors(unittest.TestCase):
