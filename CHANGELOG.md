@@ -5,6 +5,8 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-27
+
 ### Changed
 - `LED_DIM` dims to 0.33 by default, for the neopixels and the output pins alike (it was 0.3), so
   a printer sets the variables only to differ from that.
@@ -135,7 +137,8 @@ instead; it is no longer part of the bundle. Restart while idle and check that e
 command still exists. To roll back, restore the old includes and the files that called the
 helpers together, then restart while idle.
 
-[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.1.0...v1.2.0
