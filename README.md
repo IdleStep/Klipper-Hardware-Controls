@@ -148,9 +148,8 @@ managed_services: klipper
 
 Update and restart only while the printer is idle, keep overrides outside the
 checkout, and record the tested revision for each printer. To roll back, check
-out the previous tag and restart. Each tag has a
-[release](https://github.com/IdleStep/Klipper-Hardware-Controls/releases) with its
-changelog entry.
+out the previous tag and restart. The [changelog](CHANGELOG.md) says what each tag
+changes.
 
 ## Tests
 

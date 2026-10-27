@@ -34,8 +34,8 @@ below.
   is `stops` in the new `_HOTEND_FAN_STATE` macro. A local override of the
   `HOTEND_FAN_CHECK` settings no longer has to repeat the counter.
 - SECURITY.md asks for a public issue instead of a private report.
-- Every tag publishes a GitHub Release with its changelog section. The changelog has dates
-  and compare links, and Dependabot also watches the Python test requirement.
+- The changelog has dates and compare links, and Dependabot also watches the Python test
+  requirement.
 - README has a clone command, a CI badge and the firmware it is tested with.
   `docs/MIGRATION.md`, which was written for Klipper-Configs, is gone; its steps are in the
   1.0.0 entry.
@@ -119,4 +119,4 @@ helpers together, then restart while idle.
 [Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/releases/tag/v1.0.0
+[1.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/tree/v1.0.0
