@@ -38,6 +38,9 @@ class ConfigLint(unittest.TestCase):
             '[gcode_macro HELLO]\ndescription: Say hello\nrename_existing: HELLO_BASE\n'
             'variable_count: 0\ngcode:\n  M117 hi\n'), [])
 
+    def test_a_macro_section_that_only_sets_variables_needs_no_description(self):
+        self.assertEqual(self.problems('[gcode_macro HELLO]\nvariable_count: 1\n'), [])
+
     def test_other_section_types_are_not_checked(self):
         self.assertEqual(self.problems('[heater_bed]\ncontrol: mpc\n'), [])
 

@@ -54,6 +54,12 @@ class Settings(unittest.TestCase):
         self.assertEqual([command for command in printer.commands if command.startswith(controls)],
                          [])
 
+    def test_every_role_is_a_name_or_a_list_of_names(self):
+        for role, value in self.roles(HW / 'hardware_names.cfg').items():
+            with self.subTest(role=role):
+                names = value if isinstance(value, list) else [value]
+                self.assertTrue(all(isinstance(name, str) for name in names))
+
     def test_the_test_printers_local_file_sets_only_roles_that_exist(self):
         self.assertLessEqual(self.roles(HW / 'tests/klippy/hardware_names.cfg').keys(),
                              self.roles(HW / 'hardware_names.cfg').keys())
@@ -148,9 +154,19 @@ class Leds(unittest.TestCase):
         printer = Printer()
         printer.state['neopixel discostick'] = State()
         printer.state['output_pin daystick'] = State()
+        printer.state['gcode_macro LED_DIM'].neopixel_level = 0.3098
+        printer.state['gcode_macro LED_DIM'].pin_level = 0.33
         printer.run('LED_DIM')
         self.assertIn('SET_PIN PIN=daystick VALUE=0.33', printer.commands)
         self.assertTrue(any('RED=0.3098' in command for command in printer.commands))
+
+    def test_the_dim_levels_default_to_0_3_for_both_kinds(self):
+        printer = Printer()
+        printer.state['neopixel discostick'] = State()
+        printer.state['output_pin daystick'] = State()
+        printer.run('LED_DIM')
+        self.assertIn('SET_PIN PIN=daystick VALUE=0.3', printer.commands)
+        self.assertTrue(any('RED=0.3 ' in command for command in printer.commands))
 
 
 class Sensors(unittest.TestCase):

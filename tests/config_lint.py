@@ -60,7 +60,8 @@ def lint_file(path, check_includes=True):
         return problems
     for section in cfg.sections():
         if section.startswith('gcode_macro ') and not section.split(' ', 1)[1].startswith('_'):
-            if not cfg[section].get('description', '').strip():
+            # A section without gcode only sets variables of a macro that another file defines.
+            if 'gcode' in cfg[section] and not cfg[section].get('description', '').strip():
                 problems.append('[%s] has no description' % section)
         kind, _, name = section.partition(' ')
         if name and kind in ALLOWED_OPTIONS:
