@@ -29,6 +29,9 @@ Klipper-Configs. A change that follows them must not change what the printer doe
   after `gcode:`. Python follows PEP 8.
 - `key: value` with one space. Jinja filters without spaces: `value|float`.
   `RESPOND PREFIX="..."` always quoted.
+- Third-party files kept close to upstream so they can be compared and updated (`VENDORED`
+  and `NOT_INCLUDED` in Klipper-Configs' `tests/test_config_files.py`) are exempt from this
+  page and from the lint. Change them only to make them work here.
 - Option order inside a printer section is fixed per section type (see the steppers,
   extruder, heater and fan files in Klipper-Configs).
 

@@ -5,6 +5,12 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+### Changed
+- Tests: the config lint also rejects an unquoted `RESPOND PREFIX`, an option not written
+  `key: value` with one space, and a line past 100 columns (a single gcode command is exempt;
+  `lint_file(path, max_columns=None)` turns the width check off). `docs/STYLE.md` says that
+  vendored third-party files are exempt.
+
 ## [3.1.0] - 2026-10-27
 
 ### Changed
