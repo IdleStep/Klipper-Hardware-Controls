@@ -5,6 +5,12 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [Unreleased]
 
+### Changed
+- Tests: `klipper_sim.py` and the README say how Klipper-Chamber-Cooldown and Klipper-Configs
+  find this checkout: beside themselves, or at `HARDWARE_CONTROLS_PATH`. That is not
+  `HARDWARE_CONTROLS_ROOT`, which the simulator reads to load the package configs from another
+  checkout. No code changes.
+
 ## [3.1.1] - 2026-10-28
 
 ### Changed
