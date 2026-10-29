@@ -1,15 +1,14 @@
-"""Small Klipper macro simulator shared by the IdleStep configuration repositories.
+"""Small Klipper macro simulator shared by repositories that build on Hardware Controls.
 
 It renders real gcode_macro / delayed_gcode templates with Klipper's Jinja
 delimiters and executes the commands they emit against an in-memory printer
-state. No printer is contacted. Klipper-Chamber-Cooldown and Klipper-Configs
-import this module from their Hardware-Controls checkout, so keep the public
-names (State, wrap, Printer, HW_ROOT, HARDWARE_MODULES, module_path) stable.
+state. No printer is contacted. Other repositories import this module from their
+Hardware-Controls checkout, so keep the names listed in docs/API.md stable.
 
 HARDWARE_CONTROLS_ROOT, when set, loads the package configs from another
-checkout (cooldown CI uses it to test against the oldest supported release).
-It is not HARDWARE_CONTROLS_PATH: Klipper-Chamber-Cooldown and Klipper-Configs read
-that to find this checkout, which is beside them by default. This module does not.
+checkout (a repository can use it to test against its oldest supported release).
+It is not HARDWARE_CONTROLS_PATH: a repository that reuses this module reads that to
+find this checkout, which is beside it by default. This module does not.
 
 Like Klipper, each template sees a snapshot of the printer state taken when it
 starts rendering; nested macros render when their command runs.
@@ -30,14 +29,8 @@ HARDWARE_MODULES = [
 
 
 def module_path(name):
-    """The config file of a module in the checkout under test.
-
-    Before 2.0.0 hardware_names.cfg was called settings.cfg.
-    """
-    path = HW_ROOT / (name + '.cfg')
-    if name == 'hardware_names' and not path.exists():
-        path = HW_ROOT / 'settings.cfg'
-    return path
+    """The config file of a module in the checkout under test."""
+    return HW_ROOT / (name + '.cfg')
 
 
 # The test printers' own hardware_names.cfg, included after the modules like a printer's.
@@ -69,7 +62,7 @@ def wrap(value):
 
 
 def default_state():
-    """A Turbo-like printer: heated chamber, bed, part fan, two generic fans, sensors."""
+    """A printer with a heated chamber, a bed, a part fan, two generic fans and sensors."""
     return wrap({
         'idle_timeout': {'state': 'Idle'},
         'heater_generic chamber': {'target': 55., 'temperature': 55.},
