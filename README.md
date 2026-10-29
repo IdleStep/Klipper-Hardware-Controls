@@ -160,7 +160,10 @@ python -m unittest discover -s tests -v
 - `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
   Klipper-Chamber-Cooldown and Klipper-Configs reuse it. It includes
   `tests/klippy/hardware_names.cfg`, the test printers' own copy, after the
-  package, as a printer does.
+  package, as a printer does. The two repositories find this checkout beside
+  themselves, or at `HARDWARE_CONTROLS_PATH`, which they read and the simulator does
+  not. `HARDWARE_CONTROLS_ROOT`, which the simulator reads, loads the package
+  configs from another checkout.
 - `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
   tabs, trailing whitespace, malformed `RESPOND` messages, missing macro
   descriptions and `gcode_macro` or `delayed_gcode` options that stock Klipper

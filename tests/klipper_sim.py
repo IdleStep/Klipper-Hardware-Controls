@@ -8,6 +8,8 @@ names (State, wrap, Printer, HW_ROOT, HARDWARE_MODULES, module_path) stable.
 
 HARDWARE_CONTROLS_ROOT, when set, loads the package configs from another
 checkout (cooldown CI uses it to test against the oldest supported release).
+It is not HARDWARE_CONTROLS_PATH: Klipper-Chamber-Cooldown and Klipper-Configs read
+that to find this checkout, which is beside them by default. This module does not.
 
 Like Klipper, each template sees a snapshot of the printer state taken when it
 starts rendering; nested macros render when their command runs.
