@@ -26,8 +26,8 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   values. `templates.yml` runs the simulator on Jinja 2.11.3 as well as 3.1.6; its check is
   named `templates (Jinja 2.11.3)`.
 - Tests: a test keeps every path in this repository to 55 characters, so that a checkout inside
-  another repository stays under the 100 characters that Klipper-Configs allows for a Windows
-  checkout. The folders and scripts of `tests/klippy/cases` have shorter names.
+  another repository stays under a 100-character path limit on Windows. The folders and scripts
+  of `tests/klippy/cases` have shorter names.
 - `docs/API.md` lists the public interface: commands and parameters, the roles and who reads
   them, the variables a printer may set, the delayed gcode ids and the names other
   repositories import from `tests/`. A test fails when a command, role or variable is missing

@@ -2,7 +2,7 @@
 
 What this package promises. The major version changes when anything listed here is renamed or
 removed; the [changelog](../CHANGELOG.md) says how the other kinds of change are versioned.
-The README explains each command; this page only names them.
+[COMMANDS.md](COMMANDS.md) explains each command; this page only names them.
 
 ## Commands
 

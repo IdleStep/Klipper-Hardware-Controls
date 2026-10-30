@@ -11,7 +11,8 @@ python -m unittest discover -s tests -v
 
 The tests render the macros in a simulator and lint every config file. The real-firmware
 tests (`tests/test_klippy.py`) run in CI against Klipper and Kalico; see the workflow for
-how to run them locally.
+how to run them locally. [docs/TESTING.md](docs/TESTING.md) explains how the three layers of
+tests fit together.
 
 - Follow [docs/STYLE.md](docs/STYLE.md). A change that follows it must not change what
   the printer does; if a change does alter behavior, say so in the description.
