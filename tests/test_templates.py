@@ -361,6 +361,18 @@ class FanTachMonitor(unittest.TestCase):
         self.assertNotIn('PAUSE', printer.commands)
         self.assertIn('SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0', printer.commands)
 
+    def test_the_stoppage_routine_says_what_it_does(self):
+        for paused, message in [
+                (False, 'Hotend fan stopped, pausing the print and turning the hotend off'),
+                (True, 'Hotend fan stopped, turning the hotend off')]:
+            with self.subTest(paused=paused):
+                printer = self.printer_with_rpm(0.)
+                printer.state['pause_resume'].is_paused = paused
+                printer.run('FAN_STOPPAGE_ROUTINE')
+                self.assertEqual(
+                    [command for command in printer.commands if command.startswith('RESPOND')],
+                    ['RESPOND PREFIX="❌" MSG="%s"' % message])
+
     def test_the_rpm_limit_and_the_number_of_stops_are_variables(self):
         printer = self.printer_with_rpm(5000.)
         printer.state['gcode_macro HOTEND_FAN_CHECK'].min_rpm = 4000

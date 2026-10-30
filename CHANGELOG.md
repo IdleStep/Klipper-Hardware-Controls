@@ -10,6 +10,10 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 
 ## [Unreleased]
 
+### Added
+- `FAN_STOPPAGE_ROUTINE` prints `Hotend fan stopped, turning the hotend off` when the print is
+  already paused. It turned the hotend off without a word. Tests now cover both of its messages.
+
 ## [3.2.0] - 2026-10-29
 
 ### Added
