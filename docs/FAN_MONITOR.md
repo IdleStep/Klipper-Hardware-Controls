@@ -70,10 +70,10 @@ Every message has the prefix ⚠️ unless the table says otherwise.
 | `Hotend fan is not monitored - min_rpm is not set. Set it for HOTEND_FAN_CHECK as the README describes.` | `min_rpm` is 0. | Set `min_rpm` as described above. |
 | `Hotend fan stopped ({n}/{max})` | A check counted a stop. `{max}` is `max_consecutive_stops`. | Check the fan. If `{n}` reaches `{max}`, the routine runs. |
 | ❌ `Hotend fan stopped, pausing the print and turning the hotend off` | The routine runs and the print was not paused. | Fix the fan before you resume. A display shows `Hotend fan stopped`. |
+| ❌ `Hotend fan stopped, turning the hotend off` | The routine runs and the print was already paused. | Fix the fan before you resume. |
 
 Of the first three, only the one that applies appears, once after each Klipper start, however
-many checks follow. When the routine runs on a print that is already paused, it prints no
-message of its own: the hotend goes off after the last `Hotend fan stopped ({n}/{max})` line.
+many checks follow.
 
 The idea comes from the fan tach monitor in Andrew Ellis's Print-Tuning-Guide. The file is
 written for this package.
