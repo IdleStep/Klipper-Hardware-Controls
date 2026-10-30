@@ -321,6 +321,25 @@ class HardwareCheck(Responds):
         self.assertIn('RESPOND PREFIX="📃" MSG="release_xy_steppers - stepper_x found"',
                       self.responses(printer))
 
+    def test_the_hotend_fan_is_not_checked_without_the_fan_monitor(self):
+        printer = self.printer_with_devices()
+        printer.state.pop('heater_fan hotend_fan')
+        printer.run('HARDWARE_CHECK')
+        self.assertIn('RESPOND PREFIX="📃" MSG="hotend_fan - not used, the fan monitor is not '
+                      'included"', self.responses(printer))
+        self.assertFalse(any('⚠️' in command for command in printer.commands))
+        self.assertEqual(self.responses(printer)[-1],
+                         'RESPOND PREFIX="📃" MSG="Hardware check found nothing to fix"')
+
+    def test_the_hotend_fan_is_checked_with_the_fan_monitor(self):
+        printer = self.printer_with_devices()
+        printer.load(HW / 'optional/fan_tach_monitor.cfg')
+        printer.state.pop('heater_fan hotend_fan')
+        printer.run('HARDWARE_CHECK')
+        self.assertEqual([command for command in self.responses(printer) if '⚠️' in command], [
+            'RESPOND PREFIX="⚠️" MSG="hotend_fan - heater_fan hotend_fan not found"',
+            'RESPOND PREFIX="⚠️" MSG="Hardware check found 1 to fix"'])
+
     def test_it_changes_nothing(self):
         printer = self.printer_with_devices()
         printer.state['gcode_macro _HARDWARE_VARS'].bed_fans = 'bedfans'

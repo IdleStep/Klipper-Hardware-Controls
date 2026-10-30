@@ -76,9 +76,8 @@ prints one line per name: the device it found, that the role is off, or that the
 nothing. It also flags a name written with its section type and a key that is not a role.
 The last line gives the count of problems. Run it after you edit your `hardware_names.cfg`.
 
-With the shipped defaults, `hotend_fan` names `hotend_fan`. A printer with no `[heater_fan
-hotend_fan]` sees one warning for it, even when it does not use the monitor. Set `hotend_fan`
-to `""` to silence it.
+The `hotend_fan` role matters only to the [hotend fan monitor](FAN_MONITOR.md). Without the
+monitor, `HARDWARE_CHECK` says the role is not used and does not look for the fan.
 
 ## Messages
 
@@ -93,6 +92,7 @@ Each message starts with the prefix shown. Names and values in `{braces}` are fi
 | ❌ | `SWITCH_SENSOR ENABLE must be 0 or 1 (got {value})` | SWITCH_SENSOR | The sensor is unchanged. |
 | ⚠️ | `LED_DIM leaves {name} unchanged - the output pin has no pwm` | LED_DIM | Add `pwm: True` to the pin, or ignore it. |
 | 📃 | `{role} - off` | HARDWARE_CHECK | The role is empty. |
+| 📃 | `hotend_fan - not used, the fan monitor is not included` | HARDWARE_CHECK | `optional/fan_tach_monitor.cfg` is not included, so the role is not checked. |
 | 📃 | `{role} - {object} found` | HARDWARE_CHECK | The device exists. `{object}` is its section name, such as `fan_generic exhaust_fan`, or `stepper_x` for a stepper. |
 | ⚠️ | `{role} - {object} not found` | HARDWARE_CHECK | No such device. Check the spelling and the section in your printer configuration. |
 | ⚠️ | `{role} - {name} starts with the section type, give only the name after it` | HARDWARE_CHECK | Write `exhaust_fan`, not `fan_generic exhaust_fan`. |

@@ -11,6 +11,9 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 ## [Unreleased]
 
 ### Added
+- `HARDWARE_CHECK` says `hotend_fan - not used, the fan monitor is not included` when
+  `optional/fan_tach_monitor.cfg` is not included, instead of warning that the default fan is
+  missing. With the monitor included it checks the role as before.
 - `FAN_STOPPAGE_ROUTINE` prints `Hotend fan stopped, turning the hotend off` when the print is
   already paused. It turned the hotend off without a word. Tests now cover both of its messages.
 
