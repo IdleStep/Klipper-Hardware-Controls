@@ -3,6 +3,10 @@ ASSERT_HEATER HEATER=extruder TARGET=200
 FAN_STOPPAGE_ROUTINE
 ASSERT_STATUS OBJECT=pause_resume FIELD=is_paused VALUE=True
 ASSERT_HEATER HEATER=extruder TARGET=0
+; PAUSE saw the hotend already off and the target it had, and the target is cleared again.
+ASSERT_VAR MACRO=PAUSE VARIABLE=hotend_target VALUE=0.0
+ASSERT_VAR MACRO=PAUSE VARIABLE=target VALUE=200.0
+ASSERT_VAR MACRO=_HOTEND_FAN_STATE VARIABLE=target VALUE=0
 ; Already paused: the hotend still goes off.
 SET_HEATER_TEMPERATURE HEATER=extruder TARGET=200
 FAN_STOPPAGE_ROUTINE

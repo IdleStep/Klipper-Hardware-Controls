@@ -16,6 +16,7 @@ The README explains each command; this page only names them.
 | `DUMP_FAN` | none | `dump_fan.cfg` |
 | `MOTION_SENSOR`, `SWITCH_SENSOR` | `ENABLE` | `sensors.cfg` |
 | `RELEASE_Z`, `RELEASE_XY` | none | `release_steppers.cfg` |
+| `HARDWARE_CHECK` | none | `hardware_check.cfg` |
 | `HOTEND_FAN_CHECK`, `FAN_STOPPAGE_ROUTINE` | none | `optional/fan_tach_monitor.cfg` |
 
 `FAN_STOPPAGE_ROUTINE` is the one command a printer may override to change what happens when
@@ -35,12 +36,18 @@ its own copy of that file. The README table says what each refers to and who rea
 | Macro | Variables |
 |---|---|
 | `LED_DIM` | `neopixel_level`, `pin_level` |
-| `HOTEND_FAN_CHECK` | `check_seconds`, `max_consecutive_stops`, `min_rpm` |
+| `HOTEND_FAN_CHECK` | `check_seconds`, `max_consecutive_stops`, `min_rpm` (the monitor does nothing until a printer sets it) |
 | `MOTION_SENSOR` | `fmotion_enabled` |
 | `SWITCH_SENSOR` | `fswitch_enabled` |
 
 `fmotion_enabled` and `fswitch_enabled` are not read by this package. A printer's pause macro
 saves each sensor's state in them and its resume macro restores it.
+
+## Variables a printer's macros may read
+
+| Macro | Variable | Holds |
+|---|---|---|
+| `_HOTEND_FAN_STATE` | `target` | The hotend target that `FAN_STOPPAGE_ROUTINE` turned off, while it runs `PAUSE`. 0 at any other time. A `PAUSE` macro that saves the hotend target for `RESUME` reads it. |
 
 ## Delayed gcode ids
 

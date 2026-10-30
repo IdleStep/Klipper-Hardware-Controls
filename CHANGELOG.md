@@ -11,12 +11,45 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 ## [Unreleased]
 
 ### Added
+- `HARDWARE_CHECK` in the new `hardware_check.cfg`, which `hardware.cfg` includes. It reports
+  for every role of `_HARDWARE_VARS` the device it finds, that it is off, a name that matches
+  nothing, a name written with its section type, and an entry that is not a role. It changes
+  nothing and nothing calls it. If you include the modules one by one, add `hardware_check.cfg`
+  to use it.
+- `_HOTEND_FAN_STATE.target`: the hotend target that `FAN_STOPPAGE_ROUTINE` turned off, while it
+  runs `PAUSE`. Check: a `PAUSE` macro that saves the hotend target for `RESUME` should read it.
+- Tests: the real-firmware runs cover the include order of the bundle, a module and your names
+  file (`tests/klippy/cases`), `LED_DIM` on a pin without pwm, `HARDWARE_CHECK`, the sensor
+  state and the order of the fan stoppage routine. `assert.cfg` records `SET_PIN` and `SET_LED`
+  values. `templates.yml` runs the simulator on Jinja 2.11.3 as well as 3.1.6; its check is
+  named `templates (Jinja 2.11.3)`.
 - `docs/API.md` lists the public interface: commands and parameters, the roles and who reads
   them, the variables a printer may set, the delayed gcode ids and the names other
   repositories import from `tests/`. A test fails when a command, role or variable is missing
   from it.
 
 ### Changed
+- Check: `min_rpm` of `HOTEND_FAN_CHECK` now ships as 0, which keeps the monitor from watching
+  until a printer sets it; the console says so once. It was 8000, a number tuned to one fan.
+  A printer that includes `optional/fan_tach_monitor.cfg` must set `variable_min_rpm` in a file
+  included after the monitor. README: how to choose it.
+- Check: `FAN_STOPPAGE_ROUTINE` turns the hotend off before it calls `PAUSE`, not after. A
+  `PAUSE` macro that saves the hotend target now saves 0 unless it reads
+  `_HOTEND_FAN_STATE.target`, so after a fan stoppage `RESUME` leaves the hotend off.
+- `HOTEND_FAN_MONITOR` schedules its next run before it checks, so an error in the check or in
+  `PAUSE` no longer ends the monitoring until the next restart.
+- README: loading a module together with the bundle is no longer forbidden. Real Klipper and
+  Kalico merge the repeated sections (a test checks it), so only the position of your own
+  `hardware_names.cfg` matters: after the package.
+- Check: `PART_COOLING` no longer turns off speeds below the fan's `min_power` or `off_below`.
+  The firmware applies them: on Kalico a small speed now runs at about `min_power`, and on
+  Klipper `off_below` still turns it off.
+- `LED_DIM` leaves an output pin without `pwm` as it is and reports it. Klipper refuses any
+  value but 0 and 1 for such a pin, and the error stopped the calling macro.
+- Tests: `HARDWARE_LOCAL` in `klipper_sim.py` is now `HARDWARE_NAMES`, and `HARDWARE_MODULES`
+  lists `hardware_check`. `default_state` has the `bed_fans` fan, the `hotend_fan` and
+  `pause_resume`, and no longer reports an `off_below` for the part fan. The test printer has a
+  second output pin, `plainstick`, without pwm.
 - The version rule above covers settable variables, defaults, lint rules and the test-tool
   names, not only commands, parameters and role names.
 - README: the role table says which command reads each role, `RESET_FANS` and its description

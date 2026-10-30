@@ -1,0 +1,3 @@
+[include klippy-support/hardware_names.cfg]
+[include Klipper-Hardware-Controls/hardware.cfg]
+[include klippy-support/hardware_names.cfg]

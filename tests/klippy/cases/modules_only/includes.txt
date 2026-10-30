@@ -1,0 +1,4 @@
+[include Klipper-Hardware-Controls/hardware_names.cfg]
+[include Klipper-Hardware-Controls/fans.cfg]
+[include Klipper-Hardware-Controls/chamber.cfg]
+[include klippy-support/hardware_names.cfg]
