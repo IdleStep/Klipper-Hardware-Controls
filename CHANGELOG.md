@@ -10,6 +10,8 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-29
+
 ### Added
 - `HARDWARE_CHECK` in the new `hardware_check.cfg`, which `hardware.cfg` includes. It reports
   for every role of `_HARDWARE_VARS` the device it finds, that it is off, a name that matches
@@ -200,7 +202,8 @@ below.
 First release: fan, chamber, LED, filament sensor and stepper commands, and the optional
 fan tachometer monitor in `optional/fan_tach_monitor.cfg`, which is not part of the bundle.
 
-[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v2.0.0...v3.0.0
