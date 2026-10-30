@@ -30,25 +30,32 @@ that interface and the [changelog](CHANGELOG.md) lists every release.
    git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git
    ```
 
-2. **Include** the package in `printer.cfg`, then your own names file after it:
+2. **Include** the package in `printer.cfg`, and name your devices below it. This example is for
+   a printer with a `[heater_generic chamber]` and a `[fan_generic exhaust_fan]`:
 
    ```ini
    [include Klipper-Hardware-Controls/hardware.cfg]
-   [include hardware_names.cfg]
+
+   [gcode_macro _HARDWARE_VARS]
+   variable_chamber_heater: "chamber"
+   variable_exhaust_fan: "exhaust_fan"
    ```
 
-   `hardware.cfg` includes every module except the optional fan monitor. Your
-   `hardware_names.cfg` is a file you create next to `printer.cfg`; see
-   [Name your devices](#name-your-devices).
+   `hardware.cfg` includes every module except the optional fan monitor. The
+   `_HARDWARE_VARS` section is how you tell the package your device names;
+   [Name your devices](#name-your-devices) lists every role you can set.
 
-   To load only some modules, include the package's `hardware_names.cfg` first, then the
-   modules, then your own names file. This example has what chamber cooldown needs:
+   To load only some modules, include the package's `hardware_names.cfg` (its defaults), then the
+   modules, then your `_HARDWARE_VARS` section. This example has what chamber cooldown needs:
 
    ```ini
    [include Klipper-Hardware-Controls/hardware_names.cfg]
    [include Klipper-Hardware-Controls/fans.cfg]
    [include Klipper-Hardware-Controls/chamber.cfg]
-   [include hardware_names.cfg]
+
+   [gcode_macro _HARDWARE_VARS]
+   variable_chamber_heater: "chamber"
+   variable_exhaust_fan: "exhaust_fan"
    ```
 
    | Module | Commands |
@@ -61,28 +68,23 @@ that interface and the [changelog](CHANGELOG.md) lists every release.
    | `release_steppers.cfg` | RELEASE_Z, RELEASE_XY |
    | `hardware_check.cfg` | HARDWARE_CHECK |
 
-   Every module reads the roles, so include the package's `hardware_names.cfg` and put your own
-   after it. A command from a module you did not include is an unknown command. Including a
-   module that `hardware.cfg` already includes does no harm.
+   Every module reads the roles, so the package's `hardware_names.cfg` must be included. A
+   command from a module you did not include is an unknown command. Including a module that
+   `hardware.cfg` already includes does no harm.
 
 3. **Restart** Klipper: run `RESTART` in the console.
 
 ## Name your devices
 
-Copy [`hardware_names.cfg`](hardware_names.cfg) next to your `printer.cfg`, keep only the roles
-your printer needs, and give each the name of your device. For a printer with a
-`[heater_generic chamber]` and a `[fan_generic exhaust_fan]`:
+Your `_HARDWARE_VARS` section sets one variable per device, called a role. A role you do not set
+keeps the package's default, which is off for every role that depends on your own devices. An
+empty string or list turns a role off. Without any section of your own, only the part fan `fan`
+and the X and Y steppers are controlled.
 
-```ini
-[gcode_macro _HARDWARE_VARS]
-variable_chamber_heater: "chamber"
-variable_exhaust_fan: "exhaust_fan"
-```
-
-Include your file after the package. Klipper merges the two `_HARDWARE_VARS` sections and the
-later value wins, so a copy included before the package is overwritten by its empty roles. An
-empty string or list turns a role off. Without your names file, only the part fan `fan` and the
-X and Y steppers are controlled.
+Put the section after the include lines. Klipper merges it with the package's section and the
+later value wins, so a section above the include is overwritten by the package's empty roles. To
+keep your names out of `printer.cfg`, put the section in a file of your own and include that file
+after the package.
 
 | Role | Default | Names | Used by |
 |---|---|---|---|
@@ -109,7 +111,7 @@ Run `HARDWARE_CHECK` in the console. It changes nothing and prints one line per 
 📃 Hardware check found nothing to fix
 ```
 
-A `⚠️` line means a name matches no device. Fix it in your `hardware_names.cfg`, run `RESTART`
+A `⚠️` line means a name matches no device. Fix it in your `_HARDWARE_VARS` section, run `RESTART`
 and check again.
 
 Then run `EXHAUST_FAN SPEED=0.5`. The fan runs at half speed. A working command prints no
