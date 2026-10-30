@@ -66,6 +66,12 @@ class Settings(unittest.TestCase):
 
 
 class Fans(Responds):
+    def printer_with_a_second_fan(self, value):
+        printer = Printer()
+        printer.state['fan_generic filter_fan'] = wrap({'speed': 0.})
+        printer.state['gcode_macro _HARDWARE_VARS'].exhaust_fan = value
+        return printer
+
     def test_bed_fans_external_pc_and_part_cooling_work_without_an_exhaust_fan(self):
         printer = Printer()
         printer.state.pop('fan_generic exhaust_fan')
@@ -135,6 +141,47 @@ class Fans(Responds):
         self.assertEqual(printer.state['fan_generic external_pc'].speed, .4)
 
 
+    def test_a_role_with_several_fans_sets_each_one_that_exists(self):
+        for value in ['exhaust_fan, filter_fan , missing,',
+                      ['exhaust_fan', 'filter_fan', 'missing']]:
+            with self.subTest(value=value):
+                printer = self.printer_with_a_second_fan(value)
+                printer.run('EXHAUST_FAN', SPEED=.6)
+                self.assertEqual(
+                    [command for command in printer.commands if command.startswith('SET_FAN')],
+                    ['SET_FAN_SPEED FAN=exhaust_fan SPEED=0.6',
+                     'SET_FAN_SPEED FAN=filter_fan SPEED=0.6'])
+                self.assertEqual(printer.state['fan_generic filter_fan'].speed, .6)
+
+    def test_a_single_name_as_a_string_still_names_one_fan(self):
+        printer = self.printer_with_a_second_fan('filter_fan')
+        printer.run('EXHAUST_FAN', SPEED=.6)
+        self.assertEqual(printer.state['fan_generic filter_fan'].speed, .6)
+        self.assertEqual(printer.state['fan_generic exhaust_fan'].speed, 0)
+
+    def test_a_role_of_only_separators_or_unknown_names_does_nothing_and_says_nothing(self):
+        for value in [' , ', 'missing, nothing', []]:
+            with self.subTest(value=value):
+                printer = self.printer_with_a_second_fan(value)
+                printer.run('EXHAUST_FAN', SPEED=2)
+                self.assertFalse(any(command.startswith('SET_FAN') for command in printer.commands))
+                self.assertEqual(self.responses(printer), [])
+
+    def test_an_invalid_speed_for_several_fans_is_reported_once_and_changes_none(self):
+        printer = self.printer_with_a_second_fan('exhaust_fan, filter_fan')
+        printer.run('EXHAUST_FAN', SPEED=2)
+        self.assertEqual(self.responses(printer), [
+            'RESPOND PREFIX="❌" MSG="Fan speed must be between 0.0 and 1.0 (got 2)"'])
+        self.assertFalse(any(command.startswith('SET_FAN_SPEED') for command in printer.commands))
+
+    def test_reset_fans_stops_every_fan_of_a_role_with_several(self):
+        printer = self.printer_with_a_second_fan('exhaust_fan, filter_fan')
+        printer.run('EXHAUST_FAN', SPEED=1)
+        printer.run('RESET_FANS')
+        self.assertEqual(printer.state['fan_generic exhaust_fan'].speed, 0)
+        self.assertEqual(printer.state['fan_generic filter_fan'].speed, 0)
+
+
 class Chamber(Responds):
     def test_chamber_sets_the_heater_target(self):
         printer = Printer()
@@ -153,6 +200,32 @@ class Chamber(Responds):
                 self.assertEqual(
                     self.responses(printer),
                     ['RESPOND PREFIX="⚠️" MSG="Invalid CHAMBER value %s, set to 0"' % value])
+
+
+    def test_chamber_gives_every_heater_of_the_role_the_same_target(self):
+        for value in ['chamber, upper_chamber , missing', ['chamber', 'upper_chamber', 'missing']]:
+            with self.subTest(value=value):
+                printer = Printer()
+                printer.state['heater_generic upper_chamber'] = wrap({'target': 0.})
+                printer.state['gcode_macro _HARDWARE_VARS'].chamber_heater = value
+                printer.run('CHAMBER', TEMP=45)
+                self.assertEqual(
+                    [command for command in printer.commands if command.startswith('SET_HEATER')],
+                    ['SET_HEATER_TEMPERATURE HEATER=chamber TARGET=45.0',
+                     'SET_HEATER_TEMPERATURE HEATER=upper_chamber TARGET=45.0'])
+                printer.run('CHAMBER')
+                self.assertEqual(printer.state['heater_generic chamber'].target, 0)
+                self.assertEqual(printer.state['heater_generic upper_chamber'].target, 0)
+
+    def test_an_invalid_temperature_is_reported_once_and_turns_every_heater_off(self):
+        printer = Printer()
+        printer.state['heater_generic upper_chamber'] = wrap({'target': 30.})
+        printer.state['gcode_macro _HARDWARE_VARS'].chamber_heater = 'chamber, upper_chamber'
+        printer.run('CHAMBER', TEMP='abc')
+        self.assertEqual(printer.state['heater_generic chamber'].target, 0)
+        self.assertEqual(printer.state['heater_generic upper_chamber'].target, 0)
+        self.assertEqual(self.responses(printer),
+                         ['RESPOND PREFIX="⚠️" MSG="Invalid CHAMBER value abc, set to 0"'])
 
 
 class Leds(unittest.TestCase):
@@ -200,6 +273,34 @@ class Leds(unittest.TestCase):
         printer.state['configfile'].settings['output_pin daystick'] = wrap({'pwm': True})
         printer.run('LED_DIM')
         self.assertIn('SET_PIN PIN=daystick VALUE=0.33', printer.commands)
+
+
+    def test_the_roles_take_a_comma_separated_string_as_well_as_a_list(self):
+        for neopixels, pins in [('discostick, th_leds', 'daystick, nightstick'),
+                                (['discostick', 'th_leds'], ['daystick', 'nightstick'])]:
+            with self.subTest(neopixels=neopixels):
+                printer = Printer()
+                for name in ['neopixel discostick', 'neopixel th_leds', 'output_pin daystick',
+                             'output_pin nightstick']:
+                    printer.state[name] = State()
+                hw = printer.state['gcode_macro _HARDWARE_VARS']
+                hw.led_neopixels = neopixels
+                hw.led_pins = pins
+                printer.run('LED_ON')
+                self.assertEqual(
+                    [command for command in printer.commands if command.startswith('SET_')],
+                    ['SET_LED LED=discostick RED=1 GREEN=1 BLUE=1 SYNC=0 TRANSMIT=1',
+                     'SET_LED LED=th_leds RED=1 GREEN=1 BLUE=1 SYNC=0 TRANSMIT=1',
+                     'SET_PIN PIN=daystick VALUE=1', 'SET_PIN PIN=nightstick VALUE=1'])
+
+    def test_a_single_name_as_a_string_is_not_read_one_letter_at_a_time(self):
+        printer = Printer()
+        printer.state['output_pin daystick'] = State()
+        printer.state['output_pin d'] = State()
+        printer.state['gcode_macro _HARDWARE_VARS'].led_pins = 'daystick'
+        printer.run('LED_ON')
+        self.assertEqual([command for command in printer.commands if command.startswith('SET_PIN')],
+                         ['SET_PIN PIN=daystick VALUE=1'])
 
 
 class Sensors(unittest.TestCase):
@@ -263,6 +364,16 @@ class Steppers(unittest.TestCase):
         self.assertIn('SET_STEPPER_ENABLE STEPPER=stepper_x ENABLE=0', printer.commands)
         self.assertIn('SET_STEPPER_ENABLE STEPPER=stepper_y ENABLE=0', printer.commands)
 
+    def test_release_xy_takes_a_comma_separated_string_and_skips_unknown_names(self):
+        for value in ['stepper_x, stepper_q ,', ['stepper_x', 'stepper_q']]:
+            with self.subTest(value=value):
+                printer = Printer()
+                printer.state['gcode_macro _HARDWARE_VARS'].release_xy_steppers = value
+                printer.run('RELEASE_XY')
+                self.assertEqual(
+                    [command for command in printer.commands if command.startswith('SET_')],
+                    ['SET_STEPPER_ENABLE STEPPER=stepper_x ENABLE=0'])
+
 
 class HardwareCheck(Responds):
     def printer_with_devices(self):
@@ -320,6 +431,27 @@ class HardwareCheck(Responds):
             'RESPOND PREFIX="⚠️" MSG="Hardware check found 2 to fix"'])
         self.assertIn('RESPOND PREFIX="📃" MSG="release_xy_steppers - stepper_x found"',
                       self.responses(printer))
+
+    def test_every_name_in_a_comma_separated_string_is_checked(self):
+        printer = self.printer_with_devices()
+        hw = printer.state['gcode_macro _HARDWARE_VARS']
+        hw.exhaust_fan = 'exhaust_fan, filter_fan'
+        hw.release_xy_steppers = 'stepper_x,stepper_y'
+        printer.run('HARDWARE_CHECK')
+        self.assertIn('RESPOND PREFIX="📃" MSG="exhaust_fan - fan_generic exhaust_fan found"',
+                      self.responses(printer))
+        self.assertIn('RESPOND PREFIX="📃" MSG="release_xy_steppers - stepper_y found"',
+                      self.responses(printer))
+        self.assertEqual([command for command in self.responses(printer) if '⚠️' in command], [
+            'RESPOND PREFIX="⚠️" MSG="exhaust_fan - fan_generic filter_fan not found"',
+            'RESPOND PREFIX="⚠️" MSG="Hardware check found 1 to fix"'])
+
+    def test_a_role_that_takes_one_device_does_not_split_at_a_comma(self):
+        printer = self.printer_with_devices()
+        printer.state['gcode_macro _HARDWARE_VARS'].motion_sensor = 'motion_sensor, other'
+        printer.run('HARDWARE_CHECK')
+        self.assertIn('RESPOND PREFIX="⚠️" MSG="motion_sensor - filament_motion_sensor '
+                      'motion_sensor, other not found"', self.responses(printer))
 
     def test_the_hotend_fan_is_not_checked_without_the_fan_monitor(self):
         printer = self.printer_with_devices()

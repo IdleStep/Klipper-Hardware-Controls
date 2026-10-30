@@ -8,27 +8,34 @@ A command whose role is off, or whose role names a device that does not exist, d
 says nothing. Run [`HARDWARE_CHECK`](#hardware_check) to see which. A bad value is reported on
 the console and never raised, so it cannot abort the macro or the print that sent it.
 
+Each section below says whether its role takes several devices or one. A role that takes several
+devices is a name, a comma-separated string or a list, and the command acts on every device that
+exists. A role that takes one device is a single name, and a comma in it is not a separator. The
+[README](../README.md#name-your-devices) lists both groups.
+
 ## Fans
 
-`EXHAUST_FAN`, `BED_FANS` and `EXTERNAL_PC` set the speed of the fan named by the role of the
-same name. `SPEED` is `0.0` to `1.0` and defaults to 0, which stops the fan. Any other value,
-text included, leaves the fan as it is.
+`EXHAUST_FAN`, `BED_FANS` and `EXTERNAL_PC` set the speed of the fans named by the role of the
+same name. These roles take several devices, and the command sets every fan that exists to the
+same speed. `SPEED` is `0.0` to `1.0` and defaults to 0, which stops the fans. Any other value,
+text included, leaves the fans as they are, and is reported once, not once per fan.
 
-`PART_COOLING` sets the part fan named by `part_fan`. `SPEED` is `0.0` to `1.0`, or `1.1` to
-`100` as a percentage, and defaults to 0. Any other value turns the fan off. A `[fan]` gets
-`M106`; a `[fan_generic]` gets `SET_FAN_SPEED`. The command adds no minimum speed. The fan's
-own `min_power` or `off_below` decides what a small speed does, and Klipper and Kalico do not
-treat them alike.
+`PART_COOLING` sets the part fan named by `part_fan`, which takes one device. `SPEED` is `0.0` to
+`1.0`, or `1.1` to `100` as a percentage, and defaults to 0. Any other value turns the fan off. A
+`[fan]` gets `M106`; a `[fan_generic]` gets `SET_FAN_SPEED`. The command adds no minimum speed.
+The fan's own `min_power` or `off_below` decides what a small speed does, and Klipper and Kalico
+do not treat them alike.
 
-`RESET_FANS` stops the part fan, the external fan, the bed fans and the exhaust fan.
+`RESET_FANS` stops the part fan, every external fan, every bed fan and every exhaust fan.
 
 `DUMP_FAN` prints every status value of the part fan to the console.
 
 ## Chamber
 
-`CHAMBER` sets the target of the heater named by `chamber_heater`. `TEMP` is in °C and
-defaults to 0, which turns the heater off. Text or a negative value turns the heater off.
-Klipper itself refuses a target above the heater's `max_temp`.
+`CHAMBER` sets the target of the heaters named by `chamber_heater`, which takes several devices.
+Every heater that exists gets the same target. `TEMP` is in °C and defaults to 0, which turns
+the heaters off. Text or a negative value turns them off. Klipper itself refuses a target above
+a heater's `max_temp`.
 
 ## LEDs
 
@@ -45,10 +52,13 @@ variable_pin_level: 0.5
 
 An output pin without `pwm` takes only 0 and 1. `LED_DIM` leaves such a pin as it is.
 
+`led_neopixels` and `led_pins` take several devices: `"daystick, nightstick"` and
+`["daystick", "nightstick"]` name the same two pins.
+
 ## Filament sensors
 
 `MOTION_SENSOR` and `SWITCH_SENSOR` enable or disable the sensor named by `motion_sensor` or
-`switch_sensor`. `ENABLE` is `0` or `1` and defaults to 1. Any other value, text included, leaves
+`switch_sensor`. Each of these roles takes one device. `ENABLE` is `0` or `1` and defaults to 1. Any other value, text included, leaves
 the sensor as it is, so a typo cannot switch off runout detection.
 
 `sensors.cfg` also defines the delayed gcode `ENABLE_MOTION_SENSOR`. It runs
@@ -66,15 +76,17 @@ restore it.
 `RELEASE_Z` runs `M84 Z`. Klipper and Kalico disable all motors for it, not only Z.
 
 `RELEASE_XY` disables each stepper in `release_xy_steppers` on its own, and skips a name that
-is not in your configuration. Nothing here runs by itself. Disabling a stepper does not clear
-homing, so rehome after you move a disabled axis by hand.
+is not in your configuration. The role takes several devices. Nothing here runs by itself.
+Disabling a stepper does not clear homing, so rehome after you move a disabled axis by hand.
 
 ## HARDWARE_CHECK
 
 `HARDWARE_CHECK` changes nothing and nothing calls it. For every role of `_HARDWARE_VARS` it
 prints one line per name: the device it found, that the role is off, or that the name matches
-nothing. It also flags a name written with its section type and a key that is not a role.
-The last line gives the count of problems. Run it after you edit your `_HARDWARE_VARS` section.
+nothing. A role that takes several devices is checked name by name. A role that takes one device
+is checked as one name, so `"a, b"` in it is reported as a name that matches nothing. It also
+flags a name written with its section type and a key that is not a role. The last line gives the
+count of problems. Run it after you edit your `_HARDWARE_VARS` section.
 
 The `hotend_fan` role matters only to the [hotend fan monitor](FAN_MONITOR.md). Without the
 monitor, `HARDWARE_CHECK` says the role is not used and does not look for the fan.
