@@ -46,9 +46,10 @@ Or include `hardware_names.cfg` followed by only the modules you need:
 | `release_steppers.cfg` | RELEASE_Z, RELEASE_XY |
 | `hardware_check.cfg` | HARDWARE_CHECK |
 
-Chamber cooldown needs `hardware_names.cfg`, `fans.cfg` and `chamber.cfg`. Never load
-the bundle and individual modules together. Include your own `hardware_names.cfg` after the
-package: the later value of a role wins.
+Chamber cooldown needs `hardware_names.cfg`, `fans.cfg` and `chamber.cfg`. Including a module
+that `hardware.cfg` already includes does no harm: Klipper merges the repeated sections. Include
+your own `hardware_names.cfg` after the package. The later value of a role wins, so a copy
+included before the package is overwritten by the package's empty roles.
 
 ## Configuration
 

@@ -38,6 +38,9 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   `_HOTEND_FAN_STATE.target`, so after a fan stoppage `RESUME` leaves the hotend off.
 - `HOTEND_FAN_MONITOR` schedules its next run before it checks, so an error in the check or in
   `PAUSE` no longer ends the monitoring until the next restart.
+- README: loading a module together with the bundle is no longer forbidden. Real Klipper and
+  Kalico merge the repeated sections (a test checks it), so only the position of your own
+  `hardware_names.cfg` matters: after the package.
 - Check: `PART_COOLING` no longer turns off speeds below the fan's `min_power` or `off_below`.
   The firmware applies them: on Kalico a small speed now runs at about `min_power`, and on
   Klipper `off_below` still turns it off.
