@@ -157,8 +157,8 @@ what each of its messages means.
 - **A command does nothing and prints nothing.** Its role is off or names a device that does not
   exist. Commands stay silent about this on purpose. Run `HARDWARE_CHECK`.
 - **`Unknown command`.** The command's module is not included, or Klipper was not restarted.
-- **`hotend_fan - heater_fan hotend_fan not found`.** Name your hotend fan in `hotend_fan`, or
-  set it to `""` if the printer has no `[heater_fan]`.
+- **`hotend_fan - heater_fan hotend_fan not found`.** You included the fan monitor, and the fan
+  does not exist. Name your hotend fan in `hotend_fan`.
 
 ## Updating and rolling back
 
