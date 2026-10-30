@@ -33,21 +33,30 @@ that interface and the [changelog](CHANGELOG.md) lists every release.
 2. **Include** the package in `printer.cfg`, then your own names file after it:
 
    ```ini
+   # The package: a file in the folder you cloned.
    [include Klipper-Hardware-Controls/hardware.cfg]
+   # Your names file: a different file, next to printer.cfg. You create it below.
    [include hardware_names.cfg]
    ```
 
-   `hardware.cfg` includes every module except the optional fan monitor. Your
-   `hardware_names.cfg` is a file you create next to `printer.cfg`; see
-   [Name your devices](#name-your-devices).
+   `hardware.cfg` includes every module except the optional fan monitor.
 
-   To load only some modules, include the package's `hardware_names.cfg` first, then the
+   Two files are called `hardware_names.cfg`. The one inside `Klipper-Hardware-Controls/` holds
+   the defaults, with every role off, and `hardware.cfg` includes it for you. The other is your
+   own copy in your configuration folder, where you name your devices; see
+   [Name your devices](#name-your-devices). Klipper looks for an include in the folder of the
+   file that contains it. That is why `printer.cfg` needs the folder name for the package and
+   none for your file.
+
+   To load only some modules, include the package's `hardware_names.cfg` yourself, then the
    modules, then your own names file. This example has what chamber cooldown needs:
 
    ```ini
+   # The package's defaults, then the modules you want.
    [include Klipper-Hardware-Controls/hardware_names.cfg]
    [include Klipper-Hardware-Controls/fans.cfg]
    [include Klipper-Hardware-Controls/chamber.cfg]
+   # Your own names file, next to printer.cfg.
    [include hardware_names.cfg]
    ```
 
@@ -69,8 +78,8 @@ that interface and the [changelog](CHANGELOG.md) lists every release.
 
 ## Name your devices
 
-Copy [`hardware_names.cfg`](hardware_names.cfg) next to your `printer.cfg`, keep only the roles
-your printer needs, and give each the name of your device. For a printer with a
+Copy the package's [`hardware_names.cfg`](hardware_names.cfg) next to your `printer.cfg`, keep
+only the roles your printer needs, and give each the name of your device. For a printer with a
 `[heater_generic chamber]` and a `[fan_generic exhaust_fan]`:
 
 ```ini
