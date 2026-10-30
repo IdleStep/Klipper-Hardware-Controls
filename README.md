@@ -44,9 +44,11 @@ Or include `hardware_names.cfg` followed by only the modules you need:
 | `dump_fan.cfg` | DUMP_FAN |
 | `sensors.cfg` | MOTION_SENSOR, SWITCH_SENSOR, delayed ENABLE_MOTION_SENSOR |
 | `release_steppers.cfg` | RELEASE_Z, RELEASE_XY |
+| `hardware_check.cfg` | HARDWARE_CHECK |
 
 Chamber cooldown needs `hardware_names.cfg`, `fans.cfg` and `chamber.cfg`. Never load
-the bundle and individual modules together.
+the bundle and individual modules together. Include your own `hardware_names.cfg` after the
+package: the later value of a role wins.
 
 ## Configuration
 
@@ -77,14 +79,15 @@ without an error.
 | Command | Parameters and behavior |
 |---|---|
 | EXHAUST_FAN, BED_FANS, EXTERNAL_PC | `SPEED=0.0` to `1.0` (default 0, which stops the fan). Anything else, including text, leaves the fan as it is and reports `Fan speed must be between 0.0 and 1.0`. The error is reported, not raised, so it does not abort the macro or print that sent it. |
-| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `Invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
+| PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `Invalid PART_COOLING value`, so a slicer typo cannot abort a print. It adds no minimum speed of its own: the fan's `min_power` or `off_below` decides what a small speed does, and Kalico and Klipper do not treat them alike. |
 | RESET_FANS | Stops the part fan, the exhaust fan, the bed fans and the external fan. |
 | CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `Invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
-| LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. LED_DIM uses the `neopixel_level` and `pin_level` variables of `[gcode_macro LED_DIM]` (default 0.33 each); override them in a file included after the package. |
+| LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. LED_DIM uses the `neopixel_level` and `pin_level` variables of `[gcode_macro LED_DIM]` (default 0.33 each); override them in a file included after the package. An output pin without `pwm` takes only 0 and 1, so LED_DIM leaves it as it is and reports `LED_DIM leaves NAME unchanged`. |
 | DUMP_FAN | Prints the configured part fan's status. |
 | MOTION_SENSOR, SWITCH_SENSOR | `ENABLE=0` or `1` (default 1). Anything else, including text, leaves the sensor as it is and reports `MOTION_SENSOR ENABLE must be 0 or 1`, so a typo cannot disable runout detection. |
 | RELEASE_Z | Runs `M84 Z`. Stock Klipper disables **all** motors for this. |
 | RELEASE_XY | Disables the configured XY steppers individually. |
+| HARDWARE_CHECK | Reports, for every role of `_HARDWARE_VARS`, the device it finds, that it is off, or a name that matches nothing; a name written with its section type; and any entry that is not a role. It changes nothing, and nothing runs it for you. |
 
 Stepper release never runs automatically. Disabling individual steppers does not
 clear homing; rehome after moving a disabled axis by hand.
@@ -111,25 +114,49 @@ macros to save each sensor's state and for RESUME macros to restore it.
 
 `optional/fan_tach_monitor.cfg` watches the hotend fan's tachometer. It is excluded
 from `hardware.cfg`. Include it only on printers with a `[heater_fan]` that has a
-`tachometer_pin` (`hotend_fan` unless you name another, see below):
+`tachometer_pin` (`hotend_fan` unless you name another, see below). Include it before the file
+that sets `min_rpm`:
 
 ```ini
 [include Klipper-Hardware-Controls/optional/fan_tach_monitor.cfg]
 ```
 
-It starts one second after Klipper starts and checks every three seconds. After
-three consecutive readings below 8000 RPM while the hotend is hot, it pauses the
-print and turns the hotend off. If the print is already paused, the hotend is
-still turned off. The check is skipped when the fan is missing or reports no RPM, so a
-misconfigured fan cannot cause false pauses; the console says so once, so a monitor that
-watches nothing is not silent.
+It starts one second after Klipper starts and checks every three seconds. After three
+consecutive readings below `min_rpm` while the hotend is hot, it turns the hotend off and
+pauses the print. If the print is already paused, the hotend is still turned off. The check is
+skipped when the fan is missing, reports no RPM or `min_rpm` is not set, so a misconfigured fan
+cannot cause false pauses; the console says so once, so a monitor that watches nothing is not
+silent.
+
+**Set `min_rpm` before you rely on it.** The right number depends on your fan, so the monitor
+ships without one. Heat the hotend above the fan's `heater_temp`, read the `rpm` of
+`heater_fan hotend_fan` in your web interface or with `{printer["heater_fan hotend_fan"].rpm}`
+in a macro, and choose a value well below it, such as three quarters, so that normal variation
+does not trip it while a stopped fan still does. Set it in any file of your own that you
+include after the monitor, for example:
+
+```ini
+[gcode_macro HOTEND_FAN_CHECK]
+variable_min_rpm: 6500
+```
 
 The fan is the `hotend_fan` role of `_HARDWARE_VARS`, the name after the section type, so
-`"nozzle_fan"` for `[heater_fan nozzle_fan]`. The limits are the `min_rpm`,
-`max_consecutive_stops` and `check_seconds` variables of `[gcode_macro HOTEND_FAN_CHECK]`;
-override them in a local file included after the monitor. To change what happens on a
-stoppage, override `FAN_STOPPAGE_ROUTINE`. The idea comes from the fan tach monitor in
-Andrew Ellis's Print-Tuning-Guide; this file is written for this package.
+`"nozzle_fan"` for `[heater_fan nozzle_fan]`. The other limits are the `max_consecutive_stops`
+and `check_seconds` variables of the same macro. To change what happens on a stoppage, override
+`FAN_STOPPAGE_ROUTINE`. The idea comes from the fan tach monitor in Andrew Ellis's
+Print-Tuning-Guide; this file is written for this package.
+
+The monitor turns the hotend off first and then calls `PAUSE`, so a `PAUSE` that fails still
+leaves the hotend cold and the monitor keeps running. While `PAUSE` runs, the hotend's target is
+in `printer["gcode_macro _HOTEND_FAN_STATE"].target`. A `PAUSE` macro that saves the hotend
+target for `RESUME` can read it from there, and `RESUME` then heats the hotend again. A `PAUSE`
+macro that does not read it saves a target of 0, and `RESUME` leaves the hotend off.
+
+## Troubleshooting
+
+A command does nothing when the role it uses is off or names a device that does not exist, and
+it says nothing about that on purpose. Run `HARDWARE_CHECK` after you edit your
+`hardware_names.cfg`: it lists what each role found and what matches nothing.
 
 ## Updates and rollback
 
@@ -172,9 +199,10 @@ python -m unittest discover -s tests -v
   does not read.
 - `tests/test_klippy.py` loads the package in real Klipper and Kalico without
   hardware and runs `tests/klippy/*.gcode`, which assert fan speeds, heater
-  targets and the pause state after the commands. It is skipped unless
-  `KLIPPER_DIR`, `KLIPPY_DICT` and `KLIPPY_PYTHON` are set; the CI workflow shows
-  how to build them.
+  targets, output pin and LED values, sensor state and the pause state after the commands.
+  Each folder in `tests/klippy/cases` runs scripts with a different include order or a
+  mistake in the names. It is skipped unless `KLIPPER_DIR`, `KLIPPY_DICT` and `KLIPPY_PYTHON`
+  are set; the CI workflow shows how to build them.
 
 ## Contributing
 

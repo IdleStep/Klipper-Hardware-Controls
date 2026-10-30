@@ -4,7 +4,7 @@ Run with: python -m unittest discover -s tests -v
 Requires Jinja2 3.1.6. No printer access and no hardware commands are transmitted.
 
 Test classes follow the order of the modules they cover: settings, fans, chamber,
-leds, sensors, release_steppers, then the optional fan tachometer monitor.
+leds, sensors, release_steppers, hardware_check, then the optional fan tachometer monitor.
 """
 import ast
 import configparser
@@ -38,7 +38,7 @@ class Settings(unittest.TestCase):
                 for key, value in cfg['gcode_macro _HARDWARE_VARS'].items()
                 if key.startswith('variable_')}
 
-    def test_a_printer_without_a_local_file_controls_only_the_stock_devices(self):
+    def test_a_printer_without_a_names_file_controls_only_the_stock_devices(self):
         printer = Printer(hardware=False)
         for name in HARDWARE_MODULES:
             printer.load(HW / (name + '.cfg'))
@@ -60,7 +60,7 @@ class Settings(unittest.TestCase):
                 names = value if isinstance(value, list) else [value]
                 self.assertTrue(all(isinstance(name, str) for name in names))
 
-    def test_the_test_printers_local_file_sets_only_roles_that_exist(self):
+    def test_the_test_printers_names_file_sets_only_roles_that_exist(self):
         self.assertLessEqual(self.roles(HW / 'tests/klippy/hardware_names.cfg').keys(),
                              self.roles(HW / 'hardware_names.cfg').keys())
 
@@ -89,12 +89,18 @@ class Fans(Responds):
 
     def test_part_cooling_takes_a_fraction_or_a_percent(self):
         printer = Printer()
-        cases = [(0, 0), (.5, 128), (1, 255), (1.1, 3), (50, 128), (100, 255), (.005, 0)]
+        cases = [(0, 0), (.5, 128), (1, 255), (1.1, 3), (50, 128), (100, 255), (.005, 1)]
         for value, expected in cases:
             with self.subTest(value=value):
                 printer.run('PART_COOLING', SPEED=value)
                 self.assertEqual(printer.commands[-1], 'M106 S%d' % expected)
         self.assertEqual(self.responses(printer), [])
+
+    def test_part_cooling_leaves_the_minimum_speed_to_the_fan(self):
+        printer = Printer()
+        printer.state['configfile'].settings['fan'] = wrap({'min_power': .5})
+        printer.run('PART_COOLING', SPEED=.1)
+        self.assertEqual(printer.commands[-1], 'M106 S26')
 
     def test_part_cooling_reports_an_invalid_speed_and_stops_the_fan(self):
         for value in [255, 1.05, -1, 'abc', 'nan']:
@@ -168,6 +174,33 @@ class Leds(unittest.TestCase):
         self.assertIn('SET_PIN PIN=daystick VALUE=0.33', printer.commands)
         self.assertTrue(any('RED=0.33 ' in command for command in printer.commands))
 
+    def test_dim_leaves_a_pin_without_pwm_unchanged_and_says_so(self):
+        printer = Printer()
+        printer.state['output_pin daystick'] = State()
+        printer.state['configfile'].settings['output_pin daystick'] = wrap({'pwm': False})
+        printer.run('LED_DIM')
+        self.assertFalse(any(command.startswith('SET_PIN') for command in printer.commands))
+        self.assertEqual(
+            printer.commands,
+            ['_HARDWARE_LED LEVEL=0.33 PIN_LEVEL=0.33',
+             'RESPOND PREFIX="⚠️" MSG="LED_DIM leaves daystick unchanged - the output pin has no pwm"'])
+
+    def test_on_and_off_set_a_pin_without_pwm(self):
+        printer = Printer()
+        printer.state['output_pin daystick'] = State()
+        printer.state['configfile'].settings['output_pin daystick'] = wrap({'pwm': False})
+        printer.run('LED_ON')
+        printer.run('LED_OFF')
+        self.assertEqual([command for command in printer.commands if command.startswith('SET_PIN')],
+                         ['SET_PIN PIN=daystick VALUE=1', 'SET_PIN PIN=daystick VALUE=0'])
+
+    def test_dim_sets_a_pin_with_pwm(self):
+        printer = Printer()
+        printer.state['output_pin daystick'] = State()
+        printer.state['configfile'].settings['output_pin daystick'] = wrap({'pwm': True})
+        printer.run('LED_DIM')
+        self.assertIn('SET_PIN PIN=daystick VALUE=0.33', printer.commands)
+
 
 class Sensors(unittest.TestCase):
     def test_the_delayed_callback_enables_the_motion_sensor(self):
@@ -231,16 +264,83 @@ class Steppers(unittest.TestCase):
         self.assertIn('SET_STEPPER_ENABLE STEPPER=stepper_y ENABLE=0', printer.commands)
 
 
+class HardwareCheck(Responds):
+    def printer_with_devices(self):
+        printer = Printer()
+        for name in ['neopixel discostick', 'neopixel th_leds', 'output_pin daystick',
+                     'output_pin plainstick']:
+            printer.state[name] = State()
+        return printer
+
+    def test_every_named_device_that_exists_is_found(self):
+        printer = self.printer_with_devices()
+        printer.run('HARDWARE_CHECK')
+        self.assertEqual(self.responses(printer)[:3], [
+            'RESPOND PREFIX="📃" MSG="chamber_heater - heater_generic chamber found"',
+            'RESPOND PREFIX="📃" MSG="chamber_sensor - heater_generic chamber found"',
+            'RESPOND PREFIX="📃" MSG="bed_heater - heater_bed found"'])
+        self.assertIn('RESPOND PREFIX="📃" MSG="led_pins - output_pin daystick found"',
+                      self.responses(printer))
+        self.assertEqual(self.responses(printer)[-1],
+                         'RESPOND PREFIX="📃" MSG="Hardware check found nothing to fix"')
+        self.assertFalse(any('⚠️' in command for command in printer.commands))
+
+    def test_a_role_without_a_device_is_reported_as_off(self):
+        printer = self.printer_with_devices()
+        printer.state['gcode_macro _HARDWARE_VARS'].bed_fans = ''
+        printer.state['gcode_macro _HARDWARE_VARS'].led_neopixels = []
+        printer.run('HARDWARE_CHECK')
+        self.assertIn('RESPOND PREFIX="📃" MSG="bed_fans - off"', self.responses(printer))
+        self.assertIn('RESPOND PREFIX="📃" MSG="led_neopixels - off"', self.responses(printer))
+
+    def test_a_missing_device_a_wrong_form_and_an_unknown_key_are_reported(self):
+        printer = self.printer_with_devices()
+        hw = printer.state['gcode_macro _HARDWARE_VARS']
+        hw.bed_fans = 'bedfans'
+        hw.exhaust_fan = 'fan_generic exhaust_fan'
+        hw.led_pinz = ['daystick']
+        printer.run('HARDWARE_CHECK')
+        warnings = [command for command in self.responses(printer) if '⚠️' in command]
+        self.assertEqual(warnings, [
+            'RESPOND PREFIX="⚠️" MSG="exhaust_fan - fan_generic exhaust_fan starts with the '
+            'section type, give only the name after it"',
+            'RESPOND PREFIX="⚠️" MSG="bed_fans - fan_generic bedfans not found"',
+            'RESPOND PREFIX="⚠️" MSG="led_pinz is not a role - misspelt or removed"',
+            'RESPOND PREFIX="⚠️" MSG="Hardware check found 3 to fix"'])
+
+    def test_every_name_in_a_list_is_checked_and_steppers_are_read_from_the_configuration(self):
+        printer = self.printer_with_devices()
+        hw = printer.state['gcode_macro _HARDWARE_VARS']
+        hw.led_neopixels = ['discostick', 'nolights']
+        hw.release_xy_steppers = ['stepper_x', 'stepper_q']
+        printer.run('HARDWARE_CHECK')
+        self.assertEqual([command for command in self.responses(printer) if '⚠️' in command], [
+            'RESPOND PREFIX="⚠️" MSG="led_neopixels - neopixel nolights not found"',
+            'RESPOND PREFIX="⚠️" MSG="release_xy_steppers - stepper_q not found"',
+            'RESPOND PREFIX="⚠️" MSG="Hardware check found 2 to fix"'])
+        self.assertIn('RESPOND PREFIX="📃" MSG="release_xy_steppers - stepper_x found"',
+                      self.responses(printer))
+
+    def test_it_changes_nothing(self):
+        printer = self.printer_with_devices()
+        printer.state['gcode_macro _HARDWARE_VARS'].bed_fans = 'bedfans'
+        printer.run('HARDWARE_CHECK')
+        self.assertEqual([command for command in printer.commands
+                          if not command.startswith('RESPOND')], [])
+
+
 class FanTachMonitor(unittest.TestCase):
-    def printer_with_rpm(self, rpm):
+    def printer_with_rpm(self, rpm, min_rpm=8000):
         printer = Printer()
         printer.load(HW / 'optional/fan_tach_monitor.cfg')
         printer.state['toolhead'] = wrap({'extruder': 'extruder'})
         printer.state['extruder'] = wrap({'target': 250., 'temperature': 250.})
         printer.state['pause_resume'] = wrap({'is_paused': False})
-        printer.state['configfile'].settings['heater_fan hotend_fan'] = wrap({'heater_temp': 50.})
-        if rpm != 'missing':
-            printer.state['heater_fan hotend_fan'] = wrap({'rpm': rpm})
+        printer.state['gcode_macro HOTEND_FAN_CHECK'].min_rpm = min_rpm
+        if rpm == 'missing':
+            printer.state.pop('heater_fan hotend_fan')
+        else:
+            printer.state['heater_fan hotend_fan'].rpm = rpm
         return printer
 
     def test_a_stopped_fan_pauses_after_three_checks(self):
@@ -301,6 +401,52 @@ class FanTachMonitor(unittest.TestCase):
                 self.assertEqual(
                     [command for command in printer.commands if command.startswith('RESPOND')],
                     ['RESPOND PREFIX="⚠️" MSG="%s"' % message])
+
+    def test_without_a_min_rpm_the_monitor_watches_nothing_and_says_so_once(self):
+        printer = self.printer_with_rpm(0., min_rpm=0)
+        for _ in range(5):
+            printer.run('HOTEND_FAN_MONITOR')
+        self.assertNotIn('PAUSE', printer.commands)
+        self.assertEqual(printer.state['gcode_macro _HOTEND_FAN_STATE'].stops, 0)
+        self.assertEqual(
+            [command for command in printer.commands if command.startswith('RESPOND')],
+            ['RESPOND PREFIX="⚠️" MSG="Hotend fan is not monitored - min_rpm is not set. '
+             'Set it for HOTEND_FAN_CHECK as the README describes."'])
+
+    def test_the_monitor_ships_without_a_min_rpm(self):
+        printer = Printer()
+        printer.load(HW / 'optional/fan_tach_monitor.cfg')
+        self.assertEqual(printer.state['gcode_macro HOTEND_FAN_CHECK'].min_rpm, 0)
+
+    def test_the_hotend_goes_off_before_the_pause_and_the_pause_can_see_its_target(self):
+        printer = self.printer_with_rpm(0.)
+        printer.templates['PAUSE'] = printer.env.from_string(
+            'PAUSE_SAW TARGET={printer["gcode_macro _HOTEND_FAN_STATE"].target}')
+        for _ in range(3):
+            printer.run('HOTEND_FAN_CHECK')
+        off = printer.commands.index('SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0')
+        self.assertLess(off, printer.commands.index('PAUSE'))
+        self.assertIn('PAUSE_SAW TARGET=250.0', printer.commands)
+        self.assertEqual(printer.state['gcode_macro _HOTEND_FAN_STATE'].target, 0)
+
+    def test_a_pause_that_fails_leaves_the_hotend_off_and_the_loop_running(self):
+        printer = self.printer_with_rpm(0.)
+        printer.templates['PAUSE'] = printer.env.from_string('{action_raise_error("no pause")}')
+        for _ in range(2):
+            printer.run('HOTEND_FAN_MONITOR')
+        with self.assertRaises(ValueError):
+            printer.run('HOTEND_FAN_MONITOR')
+        self.assertEqual(printer.delays['HOTEND_FAN_MONITOR'], 3)
+        self.assertEqual(printer.state['extruder'].target, 0)
+        self.assertEqual(printer.state['gcode_macro _HOTEND_FAN_STATE'].target, 250.)
+        printer.run('HOTEND_FAN_MONITOR')
+        self.assertEqual(printer.state['gcode_macro _HOTEND_FAN_STATE'].target, 0)
+
+    def test_the_loop_is_armed_before_the_check_runs(self):
+        printer = self.printer_with_rpm(0.)
+        printer.run('HOTEND_FAN_MONITOR')
+        arm = 'UPDATE_DELAYED_GCODE ID=HOTEND_FAN_MONITOR DURATION=3'
+        self.assertLess(printer.commands.index(arm), printer.commands.index('HOTEND_FAN_CHECK'))
 
     def test_the_watched_fan_can_have_another_name(self):
         printer = self.printer_with_rpm(0.)

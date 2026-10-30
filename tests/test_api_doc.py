@@ -10,8 +10,10 @@ import unittest
 from klipper_sim import HW_ROOT as HW
 
 API = (HW / 'docs' / 'API.md').read_text(encoding='utf-8')
-MODULES = ['fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers',
+MODULES = ['fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers', 'hardware_check',
            'optional/fan_tach_monitor']
+# Variables of private macros that docs/API.md tells a printer's macros to read.
+READ = {'_HOTEND_FAN_STATE': ['target']}
 # What docs/API.md lists for other repositories, by module.
 TOOLS = {
     'klipper_sim': ['HW_ROOT', 'HARDWARE_MODULES', 'module_path', 'State', 'wrap',
@@ -53,6 +55,14 @@ class PublicInterface(unittest.TestCase):
                         with self.subTest(macro=name, variable=option):
                             self.assertTrue(self.mentioned(option[len('variable_'):]),
                                             '%s.%s is not in docs/API.md' % (name, option))
+
+    def test_the_variables_a_printer_may_read_exist_and_are_listed(self):
+        cfg = sections(HW / 'optional/fan_tach_monitor.cfg')
+        for macro, variables in READ.items():
+            for variable in variables:
+                with self.subTest(macro=macro, variable=variable):
+                    self.assertIn('variable_' + variable, cfg['gcode_macro ' + macro])
+                    self.assertTrue(self.mentioned(macro) and self.mentioned(variable))
 
     def test_every_role_is_listed(self):
         cfg = sections(HW / 'hardware_names.cfg')

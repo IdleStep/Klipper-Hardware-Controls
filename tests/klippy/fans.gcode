@@ -6,6 +6,9 @@ ASSERT_FAN FAN=exhaust_fan SPEED=0.5
 ASSERT_FAN FAN=external_pc SPEED=1
 ASSERT_FAN FAN=bed_fans SPEED=0.4
 ASSERT_FAN FAN=part SPEED=0.25
+; The package applies no minimum of its own: a small speed reaches the fan as asked.
+PART_COOLING SPEED=0.05
+ASSERT_FAN FAN=part SPEED=0.05
 ; 1.1 to 100 is a percentage.
 PART_COOLING SPEED=50
 ASSERT_FAN FAN=part SPEED=0.5

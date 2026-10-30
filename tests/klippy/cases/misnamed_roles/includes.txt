@@ -1,0 +1,9 @@
+[include Klipper-Hardware-Controls/hardware.cfg]
+[include klippy-support/hardware_names.cfg]
+
+# Three mistakes in the names: a name with its section type, a device that does not exist
+# and a role that is not one.
+[gcode_macro _HARDWARE_VARS]
+variable_exhaust_fan: "fan_generic exhaust_fan"
+variable_bed_fans: "bedfans"
+variable_led_pinz: ["daystick"]

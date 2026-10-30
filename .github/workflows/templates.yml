@@ -14,14 +14,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Klipper renders macros with Jinja 2.11 and Kalico with 3.1, so the simulator runs on both.
+  # The first leg keeps the name templates, the check that the main branch ruleset requires.
   templates:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: templates
+            pins: -r requirements-test.txt
+          - check: templates (Jinja 2.11.3)
+            pins: Jinja2==2.11.3 MarkupSafe==2.0.1
+    name: ${{ matrix.check }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - run: pip install -r requirements-test.txt
+      - run: pip install ${{ matrix.pins }}
       - run: python -m unittest discover -s tests -v
 
   # Load the package in real firmware (no hardware) and run tests/klippy/*.gcode.
