@@ -24,8 +24,9 @@ the hotend fan stops.
 
 ## Roles
 
-The variables of `_HARDWARE_VARS` in `hardware_names.cfg`. A printer sets the ones it needs in
-its own copy of that file. The README table says what each refers to and who reads it.
+The variables of `_HARDWARE_VARS`, defined in `hardware_names.cfg`. A printer sets the ones it
+needs in its own `_HARDWARE_VARS` section. The README table says what each refers to and who
+reads it.
 
 `chamber_heater`, `chamber_sensor`, `bed_heater`, `exhaust_fan`, `bed_fans`, `external_pc`,
 `part_fan`, `hotend_fan`, `motion_sensor`, `switch_sensor`, `led_neopixels`, `led_pins`,

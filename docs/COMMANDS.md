@@ -74,7 +74,7 @@ homing, so rehome after you move a disabled axis by hand.
 `HARDWARE_CHECK` changes nothing and nothing calls it. For every role of `_HARDWARE_VARS` it
 prints one line per name: the device it found, that the role is off, or that the name matches
 nothing. It also flags a name written with its section type and a key that is not a role.
-The last line gives the count of problems. Run it after you edit your `hardware_names.cfg`.
+The last line gives the count of problems. Run it after you edit your `_HARDWARE_VARS` section.
 
 The `hotend_fan` role matters only to the [hotend fan monitor](FAN_MONITOR.md). Without the
 monitor, `HARDWARE_CHECK` says the role is not used and does not look for the fan.
