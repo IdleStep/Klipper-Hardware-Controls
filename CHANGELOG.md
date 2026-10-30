@@ -10,12 +10,20 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-10-29
+
 ### Added
 - `HARDWARE_CHECK` says `hotend_fan - not used, the fan monitor is not included` when
   `optional/fan_tach_monitor.cfg` is not included, instead of warning that the default fan is
   missing. With the monitor included it checks the role as before.
 - `FAN_STOPPAGE_ROUTINE` prints `Hotend fan stopped, turning the hotend off` when the print is
   already paused. It turned the hotend off without a word. Tests now cover both of its messages.
+
+### Changed
+- README: states the firmware it supports, Klipper v0.12.0 or newer and Kalico v2026.01.00 or
+  newer, adds the restart step and a step that shows the install working, and gives one include
+  example for the bundle and one for modules only. The command details, the fan monitor and the
+  test layout moved to `docs/COMMANDS.md`, `docs/FAN_MONITOR.md` and `docs/TESTING.md`.
 
 ## [3.2.0] - 2026-10-29
 
@@ -209,7 +217,8 @@ below.
 First release: fan, chamber, LED, filament sensor and stepper commands, and the optional
 fan tachometer monitor in `optional/fan_tach_monitor.cfg`, which is not part of the bundle.
 
-[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.0.0...v3.1.0
