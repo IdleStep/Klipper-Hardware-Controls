@@ -3,12 +3,14 @@
 [![Hardware template checks](https://github.com/IdleStep/Klipper-Hardware-Controls/actions/workflows/templates.yml/badge.svg)](https://github.com/IdleStep/Klipper-Hardware-Controls/actions/workflows/templates.yml)
 
 Reusable hardware commands (fans, chamber heater, LEDs, filament sensors,
-stepper release) for Klipper and Kalico configurations. Klipper-Configs and
+stepper release) for Klipper and Kalico configurations.
 [Klipper-Chamber-Cooldown](https://github.com/IdleStep/Klipper-Chamber-Cooldown)
-build on it; it depends only on standard Klipper macros and `[respond]`.
+builds on it; it depends only on standard Klipper macros and `[respond]`.
 
-Public command API: **version 1**. Commands, parameters and `_HARDWARE_VARS`
-names stay compatible within version 1. See the [changelog](CHANGELOG.md).
+The major version of this package is the version of its public interface. A major release
+is the only kind that renames or removes a command, a parameter, a role of `_HARDWARE_VARS`
+or a variable you are told to set. [docs/API.md](docs/API.md) lists that interface and the
+[changelog](CHANGELOG.md) lists every release.
 
 Tested with Klipper (Jinja 2.11) and Kalico (Jinja 3.1), loaded in the real firmware, at
 the revisions pinned in [`templates.yml`](.github/workflows/templates.yml) and every week
@@ -30,7 +32,7 @@ git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git
 
 The second line is your own copy of `hardware_names.cfg`, outside the checkout, that names
 your devices (see [Configuration](#configuration)). Without it the package controls only the
-stock devices: the bed heater, the part fan `fan` and the X and Y steppers.
+part fan `fan` and the X and Y steppers, and the optional monitor watches `hotend_fan`.
 
 Or include `hardware_names.cfg` followed by only the modules you need:
 
@@ -55,17 +57,17 @@ that depends on your own devices. Copy it outside this checkout, next to your `p
 keep only the roles your printer sets, give them your devices' names and include it after
 the package. Klipper merges the two sections and the later value wins.
 
-| Variable | Default | Refers to |
-|---|---|---|
-| `chamber_heater` | `""` | `[heater_generic NAME]` |
-| `chamber_sensor` | `""` | full object name, read when there is no chamber heater |
-| `bed_heater` | `"heater_bed"` | full object name |
-| `exhaust_fan`, `bed_fans`, `external_pc` | `""` | `[fan_generic NAME]` |
-| `part_fan` | `"fan"` | `fan` (M106) or `fan_generic NAME` |
-| `hotend_fan` | `"hotend_fan"` | `[heater_fan NAME]`, watched by the optional tachometer monitor |
-| `motion_sensor`, `switch_sensor` | `""` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` |
-| `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` |
-| `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections |
+| Variable | Default | Refers to | Read by |
+|---|---|---|---|
+| `chamber_heater` | `""` | `[heater_generic NAME]` | CHAMBER; Klipper-Chamber-Cooldown |
+| `chamber_sensor` | `""` | full object name, read when there is no chamber heater | Klipper-Chamber-Cooldown only |
+| `bed_heater` | `"heater_bed"` | full object name | Klipper-Chamber-Cooldown only |
+| `exhaust_fan`, `bed_fans`, `external_pc` | `""` | `[fan_generic NAME]` | EXHAUST_FAN, BED_FANS, EXTERNAL_PC; Klipper-Chamber-Cooldown |
+| `part_fan` | `"fan"` | `fan` (M106) or `fan_generic NAME` | PART_COOLING, DUMP_FAN |
+| `hotend_fan` | `"hotend_fan"` | `[heater_fan NAME]` | the optional tachometer monitor |
+| `motion_sensor`, `switch_sensor` | `""` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` | MOTION_SENSOR, SWITCH_SENSOR |
+| `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` | LED_ON, LED_DIM, LED_OFF |
+| `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections | RELEASE_XY |
 
 An empty string or list disables a role. Devices that are not configured are skipped
 without an error.
@@ -76,7 +78,7 @@ without an error.
 |---|---|
 | EXHAUST_FAN, BED_FANS, EXTERNAL_PC | `SPEED=0.0` to `1.0` (default 0, which stops the fan). Anything else, including text, leaves the fan as it is and reports `Fan speed must be between 0.0 and 1.0`. The error is reported, not raised, so it does not abort the macro or print that sent it. |
 | PART_COOLING | `SPEED=0.0` to `1.0`, or `1.1` to `100` percent (default 0). Any other value turns the fan off and reports `Invalid PART_COOLING value`, so a slicer typo cannot abort a print. Speeds below the fan's `min_power` (or `off_below` when `min_power` is unset) turn it off. |
-| RESET_FANS | Stops every configured controlled fan role. |
+| RESET_FANS | Stops the part fan, the exhaust fan, the bed fans and the external fan. |
 | CHAMBER | `TEMP=` chamber heater target in °C (default 0, which turns the heater off). Text or a negative value turns the heater off and reports `Invalid CHAMBER value`. Klipper itself refuses a target above the heater's `max_temp`. |
 | LED_ON, LED_OFF, LED_DIM | Configured neopixel and output-pin groups. LED_DIM uses the `neopixel_level` and `pin_level` variables of `[gcode_macro LED_DIM]` (default 0.33 each); override them in a file included after the package. |
 | DUMP_FAN | Prints the configured part fan's status. |
@@ -158,10 +160,10 @@ python -m unittest discover -s tests -v
 ```
 
 - `tests/klipper_sim.py` renders the macros and simulates the commands they emit.
-  Klipper-Chamber-Cooldown and Klipper-Configs reuse it. It includes
-  `tests/klippy/hardware_names.cfg`, the test printers' own copy, after the
-  package, as a printer does. The two repositories find this checkout beside
-  themselves, or at `HARDWARE_CONTROLS_PATH`, which they read and the simulator does
+  Other repositories can reuse it ([docs/API.md](docs/API.md) lists the names they may
+  rely on). It includes `tests/klippy/hardware_names.cfg`, the test printers' own copy,
+  after the package, as a printer does. A repository that reuses it finds this checkout
+  beside itself, or at `HARDWARE_CONTROLS_PATH`, which it reads and the simulator does
   not. `HARDWARE_CONTROLS_ROOT`, which the simulator reads, loads the package
   configs from another checkout.
 - `tests/config_lint.py` checks every `.cfg` for parse errors, broken includes,
@@ -182,7 +184,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Report a safety problem as described in
 ## Style
 
 Conventions for the config files, messages and tests, shared with
-Klipper-Chamber-Cooldown and Klipper-Configs, are in [docs/STYLE.md](docs/STYLE.md).
+Klipper-Chamber-Cooldown, are in [docs/STYLE.md](docs/STYLE.md).
 
 ## License
 

@@ -25,7 +25,7 @@ jobs:
       - run: python -m unittest discover -s tests -v
 
   # Load the package in real firmware (no hardware) and run tests/klippy/*.gcode.
-  # Klipper pins Jinja2 2.11, Kalico (Turbo's firmware) 3.1: both must pass.
+  # Klipper pins Jinja2 2.11, Kalico 3.1: both must pass.
   klippy:
     runs-on: ubuntu-latest
     strategy:

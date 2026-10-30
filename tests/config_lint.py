@@ -1,4 +1,4 @@
-"""Static checks for Klipper config files, shared with Klipper-Chamber-Cooldown.
+"""Static checks for Klipper config files, shared with other repositories.
 
 Catches what the template tests cannot: files Klipper would fail to parse,
 broken includes, tab or mixed indentation, trailing whitespace, CRLF endings,

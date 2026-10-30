@@ -1,15 +1,33 @@
 # Changelog
 
-Versions follow the public command API: the major version changes only when a
-command, parameter or `_HARDWARE_VARS` name changes incompatibly.
+Versions follow the public interface listed in [docs/API.md](docs/API.md).
+
+- Major: a command, a parameter, a role of `_HARDWARE_VARS`, a variable a printer is told to
+  set, a delayed gcode id or a listed test-tool name is renamed or removed.
+- Minor: something is added, or a default or a lint rule changes in a way that can change
+  what a printer does or what another repository's tests fail on. The entry says what to check.
+- Patch: a fix that makes a command do what its documentation says.
 
 ## [Unreleased]
 
+### Added
+- `docs/API.md` lists the public interface: commands and parameters, the roles and who reads
+  them, the variables a printer may set, the delayed gcode ids and the names other
+  repositories import from `tests/`. A test fails when a command, role or variable is missing
+  from it.
+
 ### Changed
-- Tests: `klipper_sim.py` and the README say how Klipper-Chamber-Cooldown and Klipper-Configs
-  find this checkout: beside themselves, or at `HARDWARE_CONTROLS_PATH`. That is not
+- The version rule above covers settable variables, defaults, lint rules and the test-tool
+  names, not only commands, parameters and role names.
+- README: the role table says which command reads each role, `RESET_FANS` and its description
+  say that it stops the part fan, and the text no longer names a repository that is not public.
+- Tests: `klipper_sim.py` and the README say that a repository that reuses the simulator
+  finds this checkout beside itself, or at `HARDWARE_CONTROLS_PATH`. That is not
   `HARDWARE_CONTROLS_ROOT`, which the simulator reads to load the package configs from another
-  checkout. No code changes.
+  checkout.
+
+### Removed
+- Tests: `klipper_sim.module_path` no longer falls back to `settings.cfg`.
 
 ## [3.1.1] - 2026-10-28
 
@@ -27,14 +45,18 @@ command, parameter or `_HARDWARE_VARS` name changes incompatibly.
 
 ## [3.0.0] - 2026-10-27
 
+### Added
+- `LED_DIM` has the variables `neopixel_level` and `pin_level` (0.3 each), which a printer
+  sets in its own LED file included after the package.
+
 ### Changed
 - Tests: the config lint asks for a description only of a macro that has `gcode`, so a printer
   file can set the variables of a macro of the package, such as `LED_DIM`, without repeating it.
+
+### Removed
 - Breaking: `led_dim` and `led_pin_dim` are no longer roles of `_HARDWARE_VARS`, because
-  `hardware_names.cfg` names devices and these are brightness levels. `LED_DIM` has the
-  variables `neopixel_level` and `pin_level` instead (0.3 each), which a printer sets in its
-  own LED file included after the package. A printer that set `led_dim` or `led_pin_dim` moves
-  the value there.
+  `hardware_names.cfg` names devices and these are brightness levels. A printer that set
+  either moves the value to the variables of `LED_DIM`.
 
 ## [2.0.0] - 2026-10-27
 
@@ -60,8 +82,7 @@ below.
   `switch_sensor` are `""`, `led_neopixels` and `led_pins` are `[]`, and `led_dim` and
   `led_pin_dim` are `0.3`. `bed_heater`, `part_fan` and
   `release_xy_steppers` keep their stock names. A printer's own `hardware_names.cfg` starts
-  as a copy of `hardware_names.cfg`; `examples/` is gone, and the Moonraker section is in
-  the README.
+  as a copy of `hardware_names.cfg`, and the Moonraker section is in the README.
 - Breaking: the optional tachometer monitor's loop `CHECK_ALL_FANS` is now
   `HOTEND_FAN_MONITOR`, which says what it watches, and its stop counter `he_stop_count`
   is `stops` in the new `_HOTEND_FAN_STATE` macro. A local override of the
@@ -71,15 +92,15 @@ below.
 - The changelog has dates and compare links, and Dependabot also watches the Python test
   requirement.
 - README has a clone command, a CI badge and the firmware it is tested with.
-  `docs/MIGRATION.md`, which was written for Klipper-Configs, is gone; its steps are in the
-  1.0.0 entry.
 - Tests: the config lint rejects any `gcode_macro` option that stock Klipper does not read
   (a misspelt `description` stops Klipper from loading), not only `delayed_gcode` ones. The
   real-firmware fan scripts assert the fan speeds the commands ask for, and a new script runs
   `FAN_STOPPAGE_ROUTINE` and asserts the pause and the hotend target. The simulator and the
   firmware runs include `tests/klippy/hardware_names.cfg` after the package, as a printer
-  includes its own file. The simulator reads `settings.cfg` when the checkout under test is
-  older than 2.0.0, which Cooldown's checks use for the oldest supported release.
+  includes its own file.
+
+### Removed
+- `examples/`.
 
 ## [1.2.0] - 2026-10-25
 
@@ -140,16 +161,8 @@ below.
 
 ## [1.0.0] - 2026-10-25
 
-Initial extraction from Klipper-Configs, where these commands were `macros/fans.cfg`,
-`chamber.cfg`, `leds.cfg`, `sensors.cfg`, `dump_fan.cfg`, `release_steppers.cfg` and
-`fan_tach_monitor.cfg`. Command names and behavior were kept.
-
-To move a printer that used them: clone this repository, remove the old helper includes and
-include `hardware.cfg` (or the modules you need) once, followed by your `hardware-local.cfg`.
-A printer that used the old fan tachometer monitor includes `optional/fan_tach_monitor.cfg`
-instead; it is no longer part of the bundle. Restart while idle and check that every
-command still exists. To roll back, restore the old includes and the files that called the
-helpers together, then restart while idle.
+First release: fan, chamber, LED, filament sensor and stepper commands, and the optional
+fan tachometer monitor in `optional/fan_tach_monitor.cfg`, which is not part of the bundle.
 
 [Unreleased]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.1...HEAD
 [3.1.1]: https://github.com/IdleStep/Klipper-Hardware-Controls/compare/v3.1.0...v3.1.1

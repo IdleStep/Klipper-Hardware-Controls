@@ -1,7 +1,7 @@
 # Style
 
-One set of conventions for Klipper-Hardware-Controls, Klipper-Chamber-Cooldown and
-Klipper-Configs. A change that follows them must not change what the printer does.
+One set of conventions for Klipper-Hardware-Controls and Klipper-Chamber-Cooldown. A change
+that follows them must not change what the printer does.
 
 ## Files
 
@@ -29,11 +29,8 @@ Klipper-Configs. A change that follows them must not change what the printer doe
   after `gcode:`. Python follows PEP 8.
 - `key: value` with one space. Jinja filters without spaces: `value|float`.
   `RESPOND PREFIX="..."` always quoted.
-- Third-party files kept close to upstream so they can be compared and updated (`VENDORED`
-  and `NOT_INCLUDED` in Klipper-Configs' `tests/test_config_files.py`) are exempt from this
-  page and from the lint. Change them only to make them work here.
-- Option order inside a printer section is fixed per section type (see the steppers,
-  extruder, heater and fan files in Klipper-Configs).
+- Third-party files kept close to upstream so they can be compared and updated are exempt
+  from this page and from the lint. Change them only to make them work here.
 
 ## Names
 
@@ -49,9 +46,8 @@ Klipper-Configs. A change that follows them must not change what the printer doe
 ## Moonraker
 
 An `[update_manager]` section is named after the repository it updates, exactly:
-`[update_manager Klipper-Hardware-Controls]`, `[update_manager Klipper-Chamber-Cooldown]`,
-`[update_manager Klipper-Configs]`. A printer does not use another name for it
-(`git_klipper_configs`, `hardware_controls`).
+`[update_manager Klipper-Hardware-Controls]`, `[update_manager Klipper-Chamber-Cooldown]`.
+A printer does not use another name for it (`hardware_controls`).
 
 ## Comments
 
