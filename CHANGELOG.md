@@ -10,6 +10,8 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-10-31
+
 ### Added
 - The roles `chamber_heater`, `exhaust_fan`, `bed_fans`, `external_pc`, `led_neopixels`,
   `led_pins` and `release_xy_steppers` take several devices, as a comma-separated string
@@ -17,7 +19,7 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   fan named and report a bad `SPEED` once, `CHAMBER` gives every heater the same target, and
   `HARDWARE_CHECK` checks each name. A name that matches no device is skipped, as before. A role
   with one name works as it did. Check: a repository that reads these roles itself must split
-  the string too. Klipper-Chamber-Cooldown does from its next release.
+  the string too. Klipper-Chamber-Cooldown does from 2.3.0.
 
 - Tests: the simulator covers each role with several devices, and a new real-firmware case,
   `tests/klippy/cases/comma_lists`, runs the string form in Klipper and Kalico.
