@@ -1,0 +1,7 @@
+[include Klipper-Hardware-Controls/hardware.cfg]
+[include klippy-support/hardware_names.cfg]
+
+# Roles written as comma-separated strings, one of them with a name that matches no device.
+[gcode_macro _HARDWARE_VARS]
+variable_exhaust_fan: "exhaust_fan, external_pc, missing_fan"
+variable_led_pins: "daystick, plainstick"

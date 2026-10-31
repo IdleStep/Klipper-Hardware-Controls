@@ -86,17 +86,38 @@ later value wins, so a section above the include is overwritten by the package's
 keep your names out of `printer.cfg`, put the section in a file of your own and include that file
 after the package.
 
+Every role is in one of two groups. A role in the first group takes one name, a comma-separated
+string or a list. A role in the second group takes exactly one name.
+
+### Roles that take several devices
+
 | Role | Default | Names | Used by |
 |---|---|---|---|
 | `chamber_heater` | `""` | `[heater_generic NAME]` | CHAMBER, Klipper-Chamber-Cooldown |
+| `exhaust_fan`, `bed_fans`, `external_pc` | `""` | `[fan_generic NAME]` | the command of the same name, Klipper-Chamber-Cooldown |
+| `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` | LED_ON, LED_DIM, LED_OFF |
+| `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections | RELEASE_XY |
+
+The command acts on every device named and skips a name that matches no device. These two lines
+mean the same, and a single name needs neither the comma nor the brackets:
+
+```ini
+variable_exhaust_fan: "exhaust_fan, filter_fan"
+variable_exhaust_fan: ["exhaust_fan", "filter_fan"]
+```
+
+### Roles that take one device
+
+| Role | Default | Names | Used by |
+|---|---|---|---|
 | `chamber_sensor` | `""` | full object name, read when there is no chamber heater | Klipper-Chamber-Cooldown |
 | `bed_heater` | `"heater_bed"` | full object name | Klipper-Chamber-Cooldown |
-| `exhaust_fan`, `bed_fans`, `external_pc` | `""` | `[fan_generic NAME]` | the command of the same name, Klipper-Chamber-Cooldown |
 | `part_fan` | `"fan"` | `fan` for `[fan]`, or `fan_generic NAME` | PART_COOLING, DUMP_FAN |
 | `hotend_fan` | `"hotend_fan"` | `[heater_fan NAME]` | the optional fan monitor |
 | `motion_sensor`, `switch_sensor` | `""` | `[filament_motion_sensor NAME]`, `[filament_switch_sensor NAME]` | MOTION_SENSOR, SWITCH_SENSOR |
-| `led_neopixels`, `led_pins` | `[]` | `[neopixel NAME]`, `[output_pin NAME]` | LED_ON, LED_DIM, LED_OFF |
-| `release_xy_steppers` | `["stepper_x", "stepper_y"]` | stepper sections | RELEASE_XY |
+
+A comma does not split these. `variable_part_fan: "fan, fan_generic filter"` is one name that
+matches no device, so the command does nothing and `HARDWARE_CHECK` reports it.
 
 ## See it work
 
