@@ -23,6 +23,44 @@ that interface and the [changelog](CHANGELOG.md) lists every release.
 
 ## Install
 
+Run this on your printer's host:
+
+```sh
+cd ~/printer_data/config && git clone https://github.com/IdleStep/Klipper-Hardware-Controls.git && python3 Klipper-Hardware-Controls/install.py
+```
+
+Then [name your devices](#name-your-devices) below the new include in `printer.cfg`, and run
+`RESTART`.
+
+The installer is safe to run again, and running it again is how you update. In this order, it:
+
+1. moves the clone to the latest release, or leaves it alone when it has local changes
+2. backs up `printer.cfg` and `moonraker.conf` once, as `printer.cfg.before-klipper-hardware-controls`
+   and `moonraker.conf.before-klipper-hardware-controls`
+3. adds `[include Klipper-Hardware-Controls/hardware.cfg]` to `printer.cfg`, before the
+   `SAVE_CONFIG` block, unless `printer.cfg` already includes the package
+4. adds an `[update_manager Klipper-Hardware-Controls]` section to `moonraker.conf`, so Moonraker
+   offers later releases
+5. restarts Moonraker and Klipper, unless a print is running or paused
+
+Add these options to the command, for example `python3 Klipper-Hardware-Controls/install.py -n`:
+
+| Option | Effect |
+| --- | --- |
+| `-n`, `--dry-run` | Show what would change, and change nothing |
+| `-r`, `--no-restart` | Don't restart Moonraker and Klipper |
+| `-u`, `--uninstall` | Remove the include and the update section the installer added. The clone stays |
+| `--dev` | Follow `main` instead of the latest release, and write `channel: dev` |
+| `--no-update` | Don't move the clone to a newer version |
+| `-c`, `--config-dir` | Config directory, if it isn't the folder holding the clone or `~/printer_data/config` |
+| `--moonraker-url` | Moonraker's address, if it isn't `http://localhost:7125` |
+
+The installer doesn't load only some modules. To do that, or to install without the script, follow
+the steps below.
+
+<details>
+<summary>Install by hand</summary>
+
 1. **Clone** into your configuration folder:
 
    ```sh
@@ -72,7 +110,12 @@ that interface and the [changelog](CHANGELOG.md) lists every release.
    command from a module you did not include is an unknown command. Including a module that
    `hardware.cfg` already includes does no harm.
 
-3. **Restart** Klipper: run `RESTART` in the console.
+3. **Add the update entry** to `moonraker.conf`, from
+   [Updating and rolling back](#updating-and-rolling-back).
+
+4. **Restart** Moonraker and Klipper.
+
+</details>
 
 ## Name your devices
 
@@ -180,12 +223,17 @@ what each of its messages means.
 - **A command does nothing and prints nothing.** Its role is off or names a device that does not
   exist. Commands stay silent about this on purpose. Run `HARDWARE_CHECK`.
 - **`Unknown command`.** The command's module is not included, or Klipper was not restarted.
+- **The installer says the clone is not inside the config directory.** Clone the repository into
+  the folder that holds `printer.cfg`, so `printer.cfg` can include it. With several printers on
+  one host, pass each one's config directory and Moonraker address
+  (`-c ~/printer_2_data/config --moonraker-url http://localhost:7126`).
 - **`hotend_fan - heater_fan hotend_fan not found`.** You included the fan monitor, and the fan
   does not exist. Name your hotend fan in `hotend_fan`.
 
 ## Updating and rolling back
 
-Add this to `moonraker.conf`. It follows tagged releases; use `channel: dev` to follow `main`.
+`install.py` adds this to `moonraker.conf`. To add it by hand, it follows tagged releases; use
+`channel: dev` to follow `main`.
 
 ```ini
 [update_manager Klipper-Hardware-Controls]
