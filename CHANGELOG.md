@@ -10,6 +10,13 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
 
 ## [Unreleased]
 
+### Added
+- `install.py` installs or updates the package from a clone: it moves the clone to the latest
+  release, adds the include to `printer.cfg` and the update section to `moonraker.conf`, and
+  restarts Klipper. The README keeps the manual steps. `tests/test_install.py` covers its text
+  edits. It reads and writes the files in UTF-8 and replaces them in one step, so a crash cannot leave
+  `printer.cfg` half written.
+
 ## [3.4.0] - 2026-10-31
 
 ### Added
