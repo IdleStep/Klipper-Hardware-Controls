@@ -32,6 +32,7 @@ SAVE_CONFIG = "#*# <---------------------- SAVE_CONFIG"
 HEADER = re.compile(r"^\[([^\]]+)\]")
 
 
+
 # --- text edits (pure functions, so they can be tested without a printer) ---
 
 def section_name(line):
@@ -92,6 +93,23 @@ def release_tags(output):
     """The vMAJOR.MINOR.PATCH tags in `git tag` output, newest first."""
     tags = [t for t in output.split() if re.fullmatch(r"v\d+\.\d+\.\d+", t)]
     return sorted(tags, key=lambda t: tuple(int(n) for n in t[1:].split(".")), reverse=True)
+
+
+# --- reading and writing the files ---
+
+def read_text(path):
+    """The file as it is, in UTF-8 and with its own line endings."""
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def write_text(path, text):
+    """Replace the file in one step, so a crash cannot leave it half written."""
+    temp = path + ".install-tmp"
+    with open(temp, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+    shutil.copymode(path, temp)
+    os.replace(temp, path)
 
 
 # --- the installer ---
@@ -163,14 +181,15 @@ class Installer:
         if code != 0:
             print("Could not move the clone to %s: %s" % (target, out))
             return
+        if target != "main":
+            self.say("%s is checked out, so git shows a detached HEAD; that is how a release is followed" % target)
         if self.git("rev-parse", "HEAD")[1] != before:
             self.changed = True
 
     def edit_file(self, path, editor, label):
         if not os.path.exists(path):
             return None
-        with open(path) as f:
-            old = f.read()
+        old = read_text(path)
         new, notes = editor(old)
         for note in notes:
             self.say("%s: %s" % (label, note))
@@ -181,8 +200,7 @@ class Installer:
                 if not self.dry:
                     shutil.copy2(path, backup)
             if not self.dry:
-                with open(path, "w") as f:
-                    f.write(new)
+                write_text(path, new)
             self.changed = True
             return True
         return False

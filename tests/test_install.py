@@ -3,7 +3,9 @@
 Run with: python -m unittest discover -s tests -v
 """
 import importlib.util
+import os
 import pathlib
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -86,6 +88,38 @@ class ReleaseTags(unittest.TestCase):
 
     def test_other_tags_are_ignored(self):
         self.assertEqual(install.release_tags('v3.4.0 v3.5.0-rc1 nightly'), ['v3.4.0'])
+
+
+class Files(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.path = os.path.join(self.folder.name, 'printer.cfg')
+
+    def write_bytes(self, data):
+        with open(self.path, 'wb') as f:
+            f.write(data)
+
+    def read_bytes(self):
+        with open(self.path, 'rb') as f:
+            return f.read()
+
+    def test_a_file_with_non_ascii_text_survives_whatever_the_locale_is(self):
+        text = '# Query the ID of canbus：\n[display_status]\n# \U0001F4C3 note\n'
+        self.write_bytes(b'')
+        install.write_text(self.path, text)
+        self.assertEqual(install.read_text(self.path), text)
+        self.assertEqual(self.read_bytes(), text.encode('utf-8'))
+
+    def test_line_endings_are_kept(self):
+        self.write_bytes(b'a\r\nb\r\n')
+        install.write_text(self.path, install.read_text(self.path))
+        self.assertEqual(self.read_bytes(), b'a\r\nb\r\n')
+
+    def test_writing_leaves_no_temporary_file_behind(self):
+        self.write_bytes(b'x\n')
+        install.write_text(self.path, 'y\n')
+        self.assertEqual(os.listdir(self.folder.name), ['printer.cfg'])
 
 
 if __name__ == '__main__':
