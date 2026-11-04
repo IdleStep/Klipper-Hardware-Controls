@@ -94,6 +94,8 @@ class Printer:
     commands  every non-comment line emitted, in order (nested macros included)
     messages  action_respond_info output
     delays    last UPDATE_DELAYED_GCODE duration per ID
+
+    SET_GCODE_OFFSET Z_ADJUST= adds to gcode_move.homing_origin.z when the state has a gcode_move.
     """
 
     def __init__(self, hardware=True):
@@ -139,11 +141,18 @@ class Printer:
             self.messages.append(message)
             return ''
 
-        rendered = self.templates[command.upper()].render(
-            printer=copy.deepcopy(self.state),
+        snapshot = copy.deepcopy(self.state)
+        # Like Klipper, a macro also sees its own variables as plain names; the printer,
+        # params and action names win over a variable of the same name.
+        own = next((value for key, value in snapshot.items()
+                    if key.upper() == 'GCODE_MACRO ' + command.upper()), {})
+        context = dict(own)
+        context.update(
+            printer=snapshot,
             params=State({k: str(v) for k, v in params.items()}),
             action_raise_error=raise_error,
             action_respond_info=respond_info)
+        rendered = self.templates[command.upper()].render(**context)
         for line in rendered.splitlines():
             line = line.strip()
             if line and not line.startswith('#'):
@@ -165,6 +174,8 @@ class Printer:
             self.delays[args['ID']] = float(args['DURATION'])
         elif name == 'SET_IDLE_TIMEOUT':
             self.idle_timeout = float(args['TIMEOUT'])
+        elif name == 'SET_GCODE_OFFSET' and 'Z_ADJUST' in args and 'gcode_move' in self.state:
+            self.state['gcode_move'].homing_origin.z += float(args['Z_ADJUST'])
         elif name == 'SET_HEATER_TEMPERATURE':
             generic = 'heater_generic ' + args['HEATER']
             heater = self.state[generic if generic in self.state else args['HEATER']]

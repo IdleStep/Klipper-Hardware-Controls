@@ -8,6 +8,9 @@ leds, sensors, release_steppers, hardware_check, then the optional fan tachomete
 """
 import ast
 import configparser
+import pathlib
+import re
+import tempfile
 import unittest
 
 from klipper_sim import HARDWARE_MODULES, HW_ROOT as HW, Printer, State, wrap
@@ -28,6 +31,44 @@ class Loading(unittest.TestCase):
         cfg.read(HW / 'sensors.cfg')
         self.assertNotIn('initial_duration', cfg['delayed_gcode ENABLE_MOTION_SENSOR'])
         self.assertNotIn('delayed_gcode DISABLE_SENSORS', cfg)
+
+
+class Simulator(unittest.TestCase):
+    """What other repositories rely on in klipper_sim beyond the macros of this package."""
+
+    def printer_with(self, text):
+        printer = Printer(hardware=False)
+        with tempfile.TemporaryDirectory() as folder:
+            path = pathlib.Path(folder) / 'macros.cfg'
+            path.write_text(text, encoding='utf-8')
+            printer.load(path)
+        return printer
+
+    def test_the_modules_it_loads_are_the_includes_of_hardware_cfg(self):
+        text = (HW / 'hardware.cfg').read_text(encoding='utf-8')
+        included = re.findall(r'^\[include (\w+)\.cfg\]', text, re.M)
+        self.assertEqual(HARDWARE_MODULES, included)
+
+    def test_a_macro_sees_its_own_variables_as_plain_names(self):
+        printer = self.printer_with(
+            '[gcode_macro DEMO]\nvariable_park: 5\ngcode:\n  MOVE Z={park}\n')
+        printer.run('DEMO')
+        self.assertEqual(printer.commands, ['MOVE Z=5'])
+
+    def test_the_printer_and_params_names_win_over_a_variable_of_the_same_name(self):
+        printer = self.printer_with(
+            '[gcode_macro DEMO]\nvariable_params: 1\nvariable_printer: 2\n'
+            'gcode:\n  MOVE Z={params.Z} F={printer.idle_timeout.state}\n')
+        printer.run('DEMO', Z=3)
+        self.assertEqual(printer.commands, ['MOVE Z=3 F=Idle'])
+
+    def test_a_z_adjust_adds_to_the_homing_origin_only_when_there_is_a_gcode_move(self):
+        printer = self.printer_with('[gcode_macro DEMO]\ngcode:\n  SET_GCODE_OFFSET Z_ADJUST=0.05\n')
+        printer.run('DEMO')
+        printer.state['gcode_move'] = State({'homing_origin': State({'z': 0.1})})
+        printer.run('DEMO')
+        printer.run('DEMO')
+        self.assertAlmostEqual(printer.state['gcode_move'].homing_origin.z, 0.2)
 
 
 class Settings(unittest.TestCase):

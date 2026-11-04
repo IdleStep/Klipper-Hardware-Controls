@@ -17,6 +17,13 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   edits. It reads and writes the files in UTF-8 and replaces them in one step, so a crash cannot leave
   `printer.cfg` half written.
 
+### Changed
+- Tests: `klipper_sim.Printer.run` gives a macro its own variables as plain names, as Klipper does
+  (`{park}` as well as `printer["gcode_macro X"].park`), and `SET_GCODE_OFFSET Z_ADJUST=` adds to
+  `gcode_move.homing_origin.z` when the state has one. Klipper-Configs had its own copy of `run`
+  for both and drops it. A test guards that `HARDWARE_MODULES` is the include list of
+  `hardware.cfg`.
+
 ## [3.4.0] - 2026-10-31
 
 ### Added
