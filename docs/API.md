@@ -76,7 +76,8 @@ package configs from another checkout. These names stay as they are within a maj
 | `klippy_batch` | `ENV`, `SUPPORT_DIR`, `skip_unless_configured`, `delayed_gcode_as_macro`, `run_script`, `error_lines`, `run_script_files` |
 
 - `Printer(hardware=True)` has the methods `load`, `run` and `execute`, and the attributes
-  `state`, `templates`, `commands`, `messages`, `delays` and `idle_timeout`.
+  `state`, `templates`, `commands`, `messages`, `delays` and `idle_timeout`. `run` gives a macro
+  its own variables as plain names, as Klipper does.
 - `lint_file(path, check_includes=True, max_columns=100)` takes `max_columns=None` to turn the
   width check off. `lint(root, skip=())` lints every `.cfg` under a folder.
 - `default_state()` describes the devices of `tests/klippy/printer.cfg`. Devices are only ever
