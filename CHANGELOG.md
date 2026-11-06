@@ -30,6 +30,8 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   `gcode_move.homing_origin.z` when the state has one. Klipper-Configs had its own copy of `run`
   for both and drops it. A test guards that `HARDWARE_MODULES` is the include list of
   `hardware.cfg`.
+- Tests: the guard on the longest path of the repository no longer counts `__pycache__`. Its
+  files are generated and not in a checkout.
 
 ## [3.4.0] - 2026-10-31
 

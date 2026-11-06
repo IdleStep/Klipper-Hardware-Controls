@@ -90,9 +90,11 @@ class Paths(unittest.TestCase):
     def test_no_path_is_long_enough_to_break_a_checkout_inside_another_repository(self):
         # Other repositories check this one out in a folder of their own, such as
         # .test-dependencies/Klipper-Hardware-Controls, and keep every path under 100 characters
-        # so a Windows checkout works. That folder takes 45 of them.
+        # so a Windows checkout works. That folder takes 45 of them. Generated files are not in
+        # a checkout, so the bytecode caches do not count.
+        generated = {'.git', '__pycache__'}
         longest = max((path.relative_to(HW_ROOT).as_posix() for path in HW_ROOT.rglob('*')
-                       if '.git' not in path.relative_to(HW_ROOT).parts), key=len)
+                       if not generated & set(path.relative_to(HW_ROOT).parts)), key=len)
         self.assertLessEqual(len(longest), 55, longest)
 
 
