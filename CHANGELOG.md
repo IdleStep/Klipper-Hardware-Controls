@@ -16,6 +16,13 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   restarts Klipper. The README keeps the manual steps. `tests/test_install.py` covers its text
   edits. It reads and writes the files in UTF-8 and replaces them in one step, so a crash cannot leave
   `printer.cfg` half written.
+- Tests: `tests/klipper_test_kit/` holds the macro simulator without anything particular to this
+  package: `Printer(state, idle_timeout)` takes the printer's devices from its caller, and a
+  subclass can give an unknown command an effect by overriding `handle`. `klipper_sim` keeps
+  every name it listed, and its `Printer(hardware=True)` is the same class with this package's
+  modules and test devices. `tests/test_kit.py` runs the kit with no file of this package and
+  fails when it imports anything but the standard library and Jinja or names this package. The
+  kit is meant to move into a repository of its own.
 
 ### Changed
 - Tests: `klipper_sim.Printer.run` gives a macro its own variables as plain names, as Klipper does

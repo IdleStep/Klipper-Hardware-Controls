@@ -71,13 +71,19 @@ package configs from another checkout. These names stay as they are within a maj
 
 | Module in `tests/` | Names |
 |---|---|
+| `klipper_test_kit` | `State`, `wrap`, `Printer` |
 | `klipper_sim` | `HW_ROOT`, `HARDWARE_MODULES`, `module_path`, `State`, `wrap`, `default_state`, `Printer` |
 | `config_lint` | `lint_file`, `lint` |
 | `klippy_batch` | `ENV`, `SUPPORT_DIR`, `skip_unless_configured`, `delayed_gcode_as_macro`, `run_script`, `error_lines`, `run_script_files` |
 
-- `Printer(hardware=True)` has the methods `load`, `run` and `execute`, and the attributes
-  `state`, `templates`, `commands`, `messages`, `delays` and `idle_timeout`. `run` gives a macro
-  its own variables as plain names, as Klipper does.
+- `klipper_test_kit.Printer(state=None, idle_timeout=600.)` is the simulator without anything
+  particular to this package: the caller gives the printer's devices and loads the config files.
+  It has the methods `load`, `run`, `execute` and `handle`, and the attributes `state`,
+  `templates`, `commands`, `messages`, `delays` and `idle_timeout`. `run` gives a macro its own
+  variables as plain names, as Klipper does. A subclass overrides `handle(name, args, tokens)` to
+  give a command the simulator does not know an effect.
+- `klipper_sim.Printer(hardware=True)` is that class with this package's modules and the devices
+  of `default_state()`, and `hardware=False` loads none of the modules.
 - `lint_file(path, check_includes=True, max_columns=100)` takes `max_columns=None` to turn the
   width check off. `lint(root, skip=())` lints every `.cfg` under a folder.
 - `default_state()` describes the devices of `tests/klippy/printer.cfg`. Devices are only ever
