@@ -80,8 +80,9 @@ package configs from another checkout. These names stay as they are within a maj
   particular to this package: the caller gives the printer's devices and loads the config files.
   It has the methods `load`, `run`, `execute` and `handle`, and the attributes `state`,
   `templates`, `commands`, `messages`, `delays` and `idle_timeout`. `run` gives a macro its own
-  variables as plain names, as Klipper does. A subclass overrides `handle(name, args, tokens)` to
-  give a command the simulator does not know an effect.
+  variables as plain names, as Klipper does. `execute` passes a command it has no effect for to
+  `handle(name, args, tokens)`, which does nothing; a subclass overrides it to give the command
+  an effect.
 - `klipper_sim.Printer(hardware=True)` is that class with this package's modules and the devices
   of `default_state()`, and `hardware=False` loads none of the modules.
 - `lint_file(path, check_includes=True, max_columns=100)` takes `max_columns=None` to turn the

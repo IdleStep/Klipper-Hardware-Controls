@@ -74,6 +74,19 @@ class Standalone(unittest.TestCase):
         printer.execute('G28 X Y')
         self.assertEqual(printer.state['toolhead'].homed_axes, 'xy')
 
+    def test_a_command_with_no_effect_here_is_passed_to_handle(self):
+        seen = []
+
+        class Spy(Printer):
+            def handle(self, name, args, tokens):
+                seen.append(name)
+
+        printer = Spy()
+        for line in ['G28', 'SET_GCODE_OFFSET Z_ADJUST=0.1', 'SET_IDLE_TIMEOUT TIMEOUT=900']:
+            printer.execute(line)
+        # The state has no gcode_move, so SET_GCODE_OFFSET has no effect; SET_IDLE_TIMEOUT has one.
+        self.assertEqual(seen, ['G28', 'SET_GCODE_OFFSET'])
+
     def test_set_gcode_offset_needs_a_gcode_move_in_the_state(self):
         bare = Printer()
         bare.execute('SET_GCODE_OFFSET Z_ADJUST=0.1')

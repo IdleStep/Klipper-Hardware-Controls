@@ -48,8 +48,10 @@ class Printer:
     delays        last UPDATE_DELAYED_GCODE duration per ID
 
     SET_GCODE_OFFSET Z_ADJUST= adds to gcode_move.homing_origin.z when the state has a gcode_move.
-    A command this class does not know is recorded and otherwise ignored: a subclass overrides
-    `handle` to give it an effect.
+    A command that is not a macro and that nothing above acts on (an unknown one, or
+    SET_GCODE_OFFSET without a Z_ADJUST or without a gcode_move in the state) is recorded and
+    passed to `handle`, which does nothing here: a subclass overrides it to give the command an
+    effect.
     """
 
     def __init__(self, state=None, idle_timeout=600.):
@@ -142,4 +144,4 @@ class Printer:
             self.handle(name, args, tokens)
 
     def handle(self, name, args, tokens):
-        """A command that is neither a macro nor one of the above. Does nothing here."""
+        """A command that is not a macro and that `execute` has no effect for. Does nothing here."""
