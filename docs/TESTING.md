@@ -12,7 +12,7 @@ Kalico checkout and runs in CI.
 
 | Layer | File | What it checks |
 |---|---|---|
-| Simulator | `tests/test_templates.py`, `tests/klipper_sim.py` | The macros render and emit the commands and messages this package promises. |
+| Simulator | `tests/test_templates.py`, `tests/klipper_sim.py`, `tests/klipper_test_kit/` | The macros render and emit the commands and messages this package promises. |
 | Lint | `tests/config_lint.py`, `tests/test_config_lint.py` | Every `.cfg` file follows [STYLE.md](STYLE.md). |
 | Real firmware | `tests/test_klippy.py`, `tests/klippy/` | The package loads in real Klipper and Kalico and behaves as the simulator says. |
 
@@ -21,9 +21,12 @@ Kalico checkout and runs in CI.
 
 ## Simulator
 
-`tests/klipper_sim.py` renders the macros with Klipper's Jinja delimiters and runs the commands
-they emit against an in-memory printer. Messages are asserted there, so a changed message changes
-its test and its README line in the same commit.
+`tests/klipper_test_kit/` renders macros with Klipper's Jinja delimiters and runs the commands
+they emit against an in-memory printer. It knows nothing about this package: `tests/klipper_sim.py`
+gives it the devices of the test printer and the package's modules. `tests/test_kit.py` runs it on
+its own and fails when it starts to depend on this package. `tests/test_templates.py` asserts the
+`RESPOND` lines the macros emit, so a changed message changes its test and its README line in the
+same commit.
 
 The simulator includes `tests/klippy/hardware_names.cfg`, the test printers' own names file,
 after the package, as a printer does. [API.md](API.md#for-other-repositories) lists the names

@@ -16,6 +16,7 @@ MODULES = ['fans', 'chamber', 'leds', 'dump_fan', 'sensors', 'release_steppers',
 READ = {'_HOTEND_FAN_STATE': ['target']}
 # What docs/API.md lists for other repositories, by module.
 TOOLS = {
+    'klipper_test_kit': ['State', 'wrap', 'Printer'],
     'klipper_sim': ['HW_ROOT', 'HARDWARE_MODULES', 'module_path', 'State', 'wrap',
                     'default_state', 'Printer'],
     'config_lint': ['lint_file', 'lint'],
