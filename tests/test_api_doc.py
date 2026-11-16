@@ -4,6 +4,7 @@ Run with: python -m unittest discover -s tests -v
 """
 import configparser
 import importlib
+import pathlib
 import re
 import unittest
 
@@ -17,7 +18,7 @@ READ = {'_HOTEND_FAN_STATE': ['target']}
 # What docs/API.md lists for other repositories, by module.
 TOOLS = {
     'klipper_test_kit': ['State', 'wrap', 'Printer'],
-    'klipper_sim': ['HW_ROOT', 'HARDWARE_MODULES', 'module_path', 'State', 'wrap',
+    'klipper_sim': ['HW_ROOT', 'HARDWARE_MODULES', 'module_path', 'SUPPORT_DIR', 'State', 'wrap',
                     'default_state', 'Printer'],
     'config_lint': ['lint_file', 'lint'],
     'klippy_batch': ['ENV', 'SUPPORT_DIR', 'skip_unless_configured', 'delayed_gcode_as_macro',
@@ -80,6 +81,14 @@ class PublicInterface(unittest.TestCase):
                 with self.subTest(module=module, name=name):
                     self.assertTrue(hasattr(tool, name), '%s.%s does not exist' % (module, name))
                     self.assertTrue(self.mentioned(name), '%s is not in docs/API.md' % name)
+
+    def test_the_support_folder_holds_the_files_the_api_lists(self):
+        from klipper_sim import SUPPORT_DIR
+        self.assertEqual(SUPPORT_DIR, pathlib.Path(__file__).resolve().parent / 'klippy')
+        for name in ['printer.cfg', 'hardware_names.cfg', 'assert.cfg']:
+            with self.subTest(file=name):
+                self.assertTrue((SUPPORT_DIR / name).is_file())
+                self.assertTrue(self.mentioned(name))
 
 
 class RoleGroups(unittest.TestCase):
