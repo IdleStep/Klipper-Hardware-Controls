@@ -29,9 +29,13 @@ def module_path(name):
     return HW_ROOT / (name + '.cfg')
 
 
+# The folder of the test printer's files for real-firmware runs: printer.cfg, hardware_names.cfg
+# and assert.cfg among them. A repository that runs its own scripts on this printer reads them
+# here.
+SUPPORT_DIR = pathlib.Path(__file__).resolve().parent / 'klippy'
 # The test printers' own hardware_names.cfg, included after the modules like a printer's.
-# It lives beside the real-firmware scripts, which include the same file.
-HARDWARE_NAMES = pathlib.Path(__file__).resolve().parent / 'klippy' / 'hardware_names.cfg'
+# The real-firmware scripts include the same file.
+HARDWARE_NAMES = SUPPORT_DIR / 'hardware_names.cfg'
 DEFAULT_IDLE_TIMEOUT = 4800.
 
 

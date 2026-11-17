@@ -72,7 +72,7 @@ package configs from another checkout. These names stay as they are within a maj
 | Module in `tests/` | Names |
 |---|---|
 | `klipper_test_kit` | `State`, `wrap`, `Printer` |
-| `klipper_sim` | `HW_ROOT`, `HARDWARE_MODULES`, `module_path`, `State`, `wrap`, `default_state`, `Printer` |
+| `klipper_sim` | `HW_ROOT`, `HARDWARE_MODULES`, `module_path`, `SUPPORT_DIR`, `State`, `wrap`, `default_state`, `Printer` |
 | `config_lint` | `lint_file`, `lint` |
 | `klippy_batch` | `ENV`, `SUPPORT_DIR`, `skip_unless_configured`, `delayed_gcode_as_macro`, `run_script`, `error_lines`, `run_script_files` |
 
@@ -91,5 +91,6 @@ package configs from another checkout. These names stay as they are within a maj
   added to it.
 - The real-firmware runner reads `KLIPPER_DIR`, `KLIPPY_DICT` and `KLIPPY_PYTHON`, and
   `KLIPPY_REQUIRED=1` turns a skipped run into an error.
-- `tests/klippy/printer.cfg`, `hardware_names.cfg` and `assert.cfg` are the base configuration
-  of every real-firmware run that uses `SUPPORT_DIR`.
+- `klipper_sim.SUPPORT_DIR` is the folder `tests/klippy`. Its `printer.cfg`, `hardware_names.cfg`
+  and `assert.cfg` are the base configuration of every real-firmware run on this package's test
+  printer. A repository that runs its own scripts on that printer reads them from this folder.

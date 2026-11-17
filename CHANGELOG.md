@@ -23,6 +23,10 @@ Versions follow the public interface listed in [docs/API.md](docs/API.md).
   modules and test devices. `tests/test_kit.py` runs the kit with no file of this package and
   fails when it imports anything but the standard library and Jinja or names this package. The
   kit is meant to move into a repository of its own.
+- Tests: `klipper_sim.SUPPORT_DIR` is the folder of the test printer's files for real-firmware
+  runs (`tests/klippy`). A repository that runs its own scripts on that printer reads
+  `printer.cfg` and `hardware_names.cfg` from it. Once the runner moves into the kit, this name
+  stays here, because the files are this package's.
 
 ### Changed
 - Tests: `klipper_sim.Printer.run` gives a macro its own variables as plain names, as Klipper does
